@@ -10,13 +10,16 @@ import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 object EmbeddedUi {
-    private const val GOOD_RAW =
-        "https://raw.githubusercontent.com/StartStatic1/AScan-Android/941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64"
+    // UI valida em CDN (commit 941f2a0e — build #23)
+    private val SOURCES = arrayOf(
+        "https://cdn.jsdelivr.net/gh/StartStatic1/AScan-Android@941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64",
+        "https://raw.githack.com/StartStatic1/AScan-Android/941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64"
+    )
 
     private val io = Executors.newSingleThreadExecutor()
 
     fun html(context: Context): String {
-        // 1) ascan.b64 local
+        // 1) asset local ascan.b64
         tryDecodeAsset(context, "ascan.b64")?.let { return it }
 
         // 2) partes ascan0-3
@@ -32,16 +35,18 @@ object EmbeddedUi {
             }
         } catch (_: Exception) {}
 
-        // 3) baixar UI valida do commit conhecido
-        try {
-            val fut = io.submit(Callable { fetch(GOOD_RAW) })
-            val r = fut.get(45, TimeUnit.SECONDS)
-            if (r.length > 500) return decode(r)
-        } catch (e: Exception) {
-            throw IllegalStateException("UI falhou: ${e.message}")
+        // 3) CDN (sempre funciona offline-build)
+        var lastErr: Exception? = null
+        for (url in SOURCES) {
+            try {
+                val fut = io.submit(Callable { fetch(url) })
+                val r = fut.get(40, TimeUnit.SECONDS)
+                if (r.length > 500) return decode(r)
+            } catch (e: Exception) {
+                lastErr = e
+            }
         }
-
-        throw IllegalStateException("UI nao encontrada")
+        throw IllegalStateException("UI falhou: ${lastErr?.message ?: "sem fonte"}")
     }
 
     private fun tryDecodeAsset(context: Context, name: String): String? {
@@ -63,7 +68,7 @@ object EmbeddedUi {
             instanceFollowRedirects = true
         }
         if (conn.responseCode !in 200..299) {
-            throw IllegalStateException("HTTP ${conn.responseCode}")
+            throw IllegalStateException("HTTP ${conn.responseCode} $url")
         }
         return conn.inputStream.bufferedReader(Charsets.UTF_8).use {
             it.readText().filter { ch -> !ch.isWhitespace() }
