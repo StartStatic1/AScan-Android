@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AScan</title>
+<style>
+body{margin:0;background:#0a0a0f;color:#eeeef5;font-family:system-ui,sans-serif;
+display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px}
+.box{max-width:320px}
+.logo{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#a855f7,#e879f9);
+margin:0 auto 16px;display:grid;place-items:center;font-weight:800;font-size:22px;color:#0a0a0f}
+h1{margin:0 0 8px;background:linear-gradient(90deg,#e879f9,#a855f7);-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;font-size:1.6rem}
+p{color:#8b8ba3;font-size:0.9rem}
+.err{color:#f43f5e;margin-top:12px;font-size:0.85rem}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">A</div>
+  <h1>AScan</h1>
+  <p id="msg">Carregando interface...</p>
+  <p class="err" id="err"></p>
+</div>
+<script>
+(function(){
+  var urls = [
+    "https://cdn.jsdelivr.net/gh/StartStatic1/AScan-Combos@main/ascan.html",
+    "https://raw.githubusercontent.com/StartStatic1/AScan-Combos/main/ascan.html"
+  ];
+  var i = 0;
+  function tryNext(){
+    if(i >= urls.length){
+      document.getElementById("msg").textContent = "Falha ao carregar";
+      document.getElementById("err").textContent = "Sem internet ou arquivo ausente no GitHub.";
+      return;
+    }
+    var u = urls[i++];
+    fetch(u, {cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
+      .then(function(html){
+        document.open();
+        document.write(html);
+        document.close();
+      })
+      .catch(function(){ tryNext(); });
+  }
+  tryNext();
+})();
+</script>
+</body>
+</html>
