@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
             ).apply { topMargin = dp(16) }
             setOnClickListener {
                 val code = input.text?.toString().orEmpty()
-                if (UnlockStore.tryUnlock(this@MainActivity, code)) {
+                if (UnlockStore.unlock(this@MainActivity, code)) {
                     openApp()
                 } else {
                     Toast.makeText(this@MainActivity, "Codigo invalido", Toast.LENGTH_SHORT).show()
