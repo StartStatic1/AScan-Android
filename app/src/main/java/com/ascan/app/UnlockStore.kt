@@ -4,7 +4,7 @@ import android.content.Context
 import java.security.MessageDigest
 
 object UnlockStore {
-    // Código padrão: AScan@2026  (só o hash fica no APK)
+    // Codigo padrao: AScan@2026  (so o hash fica no APK)
     private const val CODE_HASH =
         "333f287599251371866e22bb401fd3e4e5313601f41627967c47ec37fcd15462"
 
