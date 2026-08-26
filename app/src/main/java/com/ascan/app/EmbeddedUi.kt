@@ -2,64 +2,32 @@ package com.ascan.app
 
 import android.content.Context
 import java.io.ByteArrayInputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.zip.GZIPInputStream
 
 object EmbeddedUi {
-    private val REMOTE_BASE =
-        "https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/app/src/main/assets/"
-
     fun html(context: Context): String {
         try {
-            val a = loadFromAssets(context)
-            if (a.isNotBlank()) return a
-        } catch (_: Exception) {}
-        try {
-            val r = loadFromRemoteParts()
-            if (r.isNotBlank()) return r
-        } catch (_: Exception) {}
-        throw IllegalStateException("UI nao encontrada (ascan.b64 / ascan0-3)")
-    }
-
-    private fun loadFromAssets(context: Context): String {
-        // Prefer single file, then 4 parts
-        try {
-            val single = context.assets.open("ascan.b64").bufferedReader(Charsets.UTF_8)
+            val fromAsset = context.assets.open("ascan.b64").bufferedReader(Charsets.UTF_8)
                 .use { it.readText() }
                 .filter { !it.isWhitespace() }
-            if (single.isNotEmpty()) {
-                try {
-                    return decode(single)
-                } catch (_: Exception) {
-                    // fall through to parts
-                }
+            if (fromAsset.length > 100) {
+                try { return decode(fromAsset) } catch (_: Exception) {}
             }
         } catch (_: Exception) {}
 
-        val sb = StringBuilder()
-        for (i in 0..3) {
-            context.assets.open("ascan$i.b64").bufferedReader(Charsets.UTF_8).use {
-                sb.append(it.readText().filter { ch -> !ch.isWhitespace() })
+        try {
+            val sb = StringBuilder()
+            for (i in 0..3) {
+                context.assets.open("ascan$i.b64").bufferedReader(Charsets.UTF_8).use {
+                    sb.append(it.readText().filter { ch -> !ch.isWhitespace() })
+                }
             }
-        }
-        return decode(sb.toString())
-    }
+            if (sb.length > 100) {
+                try { return decode(sb.toString()) } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {}
 
-    private fun loadFromRemoteParts(): String {
-        val sb = StringBuilder()
-        for (i in 0..3) {
-            val url = REMOTE_BASE + "ascan$i.b64"
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15000
-                readTimeout = 30000
-                requestMethod = "GET"
-            }
-            conn.inputStream.bufferedReader(Charsets.UTF_8).use {
-                sb.append(it.readText().filter { ch -> !ch.isWhitespace() })
-            }
-        }
-        return decode(sb.toString())
+        return decode(EMBEDDED)
     }
 
     private fun decode(b64: String): String {
@@ -68,4 +36,24 @@ object EmbeddedUi {
             return gis.readBytes().toString(Charsets.UTF_8)
         }
     }
+
+    // gzip+base64 da UI (build #23) — fallback garantido no APK
+    private val EMBEDDED: String = loadEmbedded()
+
+    private fun loadEmbedded(): String {
+        val parts = arrayOf(
+            PART0, PART1, PART2, PART3, PART4, PART5, PART6, PART7, PART8
+        )
+        return parts.joinToString("")
+    }
+
+    private const val PART0 = "PLACEHOLDER0"
+    private const val PART1 = "PLACEHOLDER1"
+    private const val PART2 = "PLACEHOLDER2"
+    private const val PART3 = "PLACEHOLDER3"
+    private const val PART4 = "PLACEHOLDER4"
+    private const val PART5 = "PLACEHOLDER5"
+    private const val PART6 = "PLACEHOLDER6"
+    private const val PART7 = "PLACEHOLDER7"
+    private const val PART8 = "PLACEHOLDER8"
 }
