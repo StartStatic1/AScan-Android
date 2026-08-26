@@ -1,26 +1,37 @@
 # AScan (Android)
 
-App Android em **Kotlin** com **WebView** carregando o AScan (HTML).
+App Kotlin + WebView do **AScan**, com **código de acesso**.
 
-## Abrir no Android Studio
+## Código de desbloqueio (padrão)
 
-1. Instale [Android Studio](https://developer.android.com/studio)
-2. **File → Open** → pasta `AScanAndroid`
-3. Aguarde o Gradle sync
-4. Rode em emulador ou celular (USB debug)
-
-## Gerar APK
-
-```bash
-./gradlew assembleDebug
+```
+AScan@2026
 ```
 
-APK em: `app/build/outputs/apk/debug/app-debug.apk`
+Troque o hash em `app/src/main/java/com/ascan/app/UnlockStore.kt`  
+(gere com: `echo -n 'SEU_CODIGO' | sha256sum`).
 
-## Observações
+## Compilar no GitHub Actions
 
-- Internet liberada (combos GitHub + scan IPTV)
-- HTTP cleartext permitido (muitos servidores IPTV usam http://)
-- HTML em `app/src/main/assets/index.html`
+1. Push neste repositório
+2. Aba **Actions** → workflow **Build AScan APK**
+3. Baixe o artifact **AScan-debug-apk**
+
+Ou use **Actions → Run workflow** (botão manual).
+
+## Android Studio
+
+File → Open → esta pasta → Run.
+
+## Combos online
+
+Repo: https://github.com/StartStatic1/AScan-Combos  
+
+Nomes na tela (sem `.txt`):
+- `combo1.txt` → **Basic**
+- `combo2.txt` → **Plus**
+- `combo3.txt` → **Pro**
+
+Ou use `lista.txt` com `Nome|URL`.
 
 t.me/ApkBugado
