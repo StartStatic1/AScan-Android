@@ -4,10 +4,29 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#2E1065" android:pathData="M54,54m-40,0a40,40 0,1,1 80,0a40,40 0,1,1 -80,0"/>
-    <path android:fillColor="#7C3AED" android:pathData="M54,54m-32,0a32,32 0,1,1 64,0a32,32 0,1,1 -64,0"/>
-    <path android:fillColor="#A855F7" android:pathData="M54,54m-24,0a24,24 0,1,1 48,0a24,24 0,1,1 -48,0"/>
-    <path android:fillColor="#E879F9" android:pathData="M54,54m-10,0a10,10 0,1,1 20,0a10,10 0,1,1 -20,0"/>
-    <path android:fillColor="#F5D0FE" android:fillAlpha="0.85" android:pathData="M54,54 L54,22 A32,32 0 0,1 78,38 Z"/>
-    <path android:fillColor="#0A0A0F" android:pathData="M54,54m-4,0a4,4 0,1,1 8,0a4,4 0,1,1 -8,0"/>
+    <!-- soft outer glow circle -->
+    <path
+        android:fillColor="#2E1065"
+        android:pathData="M54,54m-40,0a40,40 0,1,1 80,0a40,40 0,1,1 -80,0"/>
+    <!-- main circle -->
+    <path
+        android:fillColor="#7C3AED"
+        android:pathData="M54,54m-32,0a32,32 0,1,1 64,0a32,32 0,1,1 -64,0"/>
+    <!-- inner ring -->
+    <path
+        android:fillColor="#A855F7"
+        android:pathData="M54,54m-24,0a24,24 0,1,1 48,0a24,24 0,1,1 -48,0"/>
+    <!-- core -->
+    <path
+        android:fillColor="#E879F9"
+        android:pathData="M54,54m-10,0a10,10 0,1,1 20,0a10,10 0,1,1 -20,0"/>
+    <!-- scan arc (top-right wedge) -->
+    <path
+        android:fillColor="#F5D0FE"
+        android:fillAlpha="0.85"
+        android:pathData="M54,54 L54,22 A32,32 0 0,1 78,38 Z"/>
+    <!-- center dot -->
+    <path
+        android:fillColor="#0A0A0F"
+        android:pathData="M54,54m-4,0a4,4 0,1,1 8,0a4,4 0,1,1 -8,0"/>
 </vector>
