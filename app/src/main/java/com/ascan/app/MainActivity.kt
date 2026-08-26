@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val sub = TextView(this).apply {
-            text = "Digite o código de acesso"
+            text = "Digite o codigo de acesso"
             setTextColor(Color.parseColor("#8B8BA3"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             gravity = Gravity.CENTER
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val input = EditText(this).apply {
-            hint = "Código"
+            hint = "Codigo"
             setHintTextColor(Color.parseColor("#5A5A72"))
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.parseColor("#1A1A26"))
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, "Acesso liberado", Toast.LENGTH_SHORT).show()
                 openApp()
             } else {
-                Toast.makeText(this@MainActivity, "Código inválido", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Codigo invalido", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -141,8 +141,14 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean = false
             }
             webChromeClient = WebChromeClient()
-            loadUrl("file:///android_asset/index.html")
         }
+        wv.loadDataWithBaseURL(
+            "https://app.ascan.local/",
+            EmbeddedUi.html(),
+            "text/html",
+            "UTF-8",
+            null
+        )
         webView = wv
         setContentView(wv)
     }
