@@ -116,6 +116,13 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun openApp() {
+        val html = try {
+            EmbeddedUi.html(this)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao carregar UI: ${e.message}", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val wv = WebView(this).apply {
             setBackgroundColor(Color.parseColor("#0A0A0F"))
             settings.javaScriptEnabled = true
@@ -144,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         }
         wv.loadDataWithBaseURL(
             "https://app.ascan.local/",
-            EmbeddedUi.html(),
+            html,
             "text/html",
             "UTF-8",
             null
