@@ -2,32 +2,44 @@ package com.ascan.app
 
 import android.content.Context
 import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.zip.GZIPInputStream
 
 object EmbeddedUi {
+    // Commit conhecido com ascan.b64 VALIDO (build #23)
+    private const val GOOD_RAW =
+        "https://raw.githubusercontent.com/StartStatic1/AScan-Android/941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64"
+
     fun html(context: Context): String {
+        // 1) assets locais
         try {
-            val fromAsset = context.assets.open("ascan.b64").bufferedReader(Charsets.UTF_8)
-                .use { it.readText() }
-                .filter { !it.isWhitespace() }
-            if (fromAsset.length > 100) {
-                try { return decode(fromAsset) } catch (_: Exception) {}
+            val a = context.assets.open("ascan.b64").bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }.filter { !it.isWhitespace() }
+            if (a.length > 500) {
+                try { return decode(a) } catch (_: Exception) {}
             }
         } catch (_: Exception) {}
 
+        // 2) raw do commit bom (internet)
         try {
-            val sb = StringBuilder()
-            for (i in 0..3) {
-                context.assets.open("ascan$i.b64").bufferedReader(Charsets.UTF_8).use {
-                    sb.append(it.readText().filter { ch -> !ch.isWhitespace() })
-                }
-            }
-            if (sb.length > 100) {
-                try { return decode(sb.toString()) } catch (_: Exception) {}
-            }
+            val r = fetch(GOOD_RAW)
+            if (r.length > 500) return decode(r)
         } catch (_: Exception) {}
 
-        return decode(EMBEDDED)
+        throw IllegalStateException("UI nao encontrada. Reinstale o APK do build verde.")
+    }
+
+    private fun fetch(url: String): String {
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 20000
+            readTimeout = 40000
+            requestMethod = "GET"
+            setRequestProperty("User-Agent", "AScanApp/1.0")
+        }
+        return conn.inputStream.bufferedReader(Charsets.UTF_8).use {
+            it.readText().filter { ch -> !ch.isWhitespace() }
+        }
     }
 
     private fun decode(b64: String): String {
@@ -36,24 +48,4 @@ object EmbeddedUi {
             return gis.readBytes().toString(Charsets.UTF_8)
         }
     }
-
-    // gzip+base64 da UI (build #23) — fallback garantido no APK
-    private val EMBEDDED: String = loadEmbedded()
-
-    private fun loadEmbedded(): String {
-        val parts = arrayOf(
-            PART0, PART1, PART2, PART3, PART4, PART5, PART6, PART7, PART8
-        )
-        return parts.joinToString("")
-    }
-
-    private const val PART0 = "PLACEHOLDER0"
-    private const val PART1 = "PLACEHOLDER1"
-    private const val PART2 = "PLACEHOLDER2"
-    private const val PART3 = "PLACEHOLDER3"
-    private const val PART4 = "PLACEHOLDER4"
-    private const val PART5 = "PLACEHOLDER5"
-    private const val PART6 = "PLACEHOLDER6"
-    private const val PART7 = "PLACEHOLDER7"
-    private const val PART8 = "PLACEHOLDER8"
 }
