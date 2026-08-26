@@ -25,29 +25,36 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 class MainActivity : AppCompatActivity() {
 
     private var webView: WebView? = null
-    private val httpExecutor = Executors.newFixedThreadPool(8)
+    private val httpExecutor = Executors.newFixedThreadPool(12)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (UnlockStore.isUnlocked(this)) openApp() else showUnlockScreen()
+        if (UnlockStore.isUnlocked(this)) {
+            openApp()
+        } else {
+            showUnlockScreen()
+        }
     }
 
     private fun showUnlockScreen() {
         val density = resources.displayMetrics.density
         fun dp(v: Int) = (v * density).toInt()
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0A0A0F"))
             gravity = Gravity.CENTER
             setPadding(dp(28), dp(28), dp(28), dp(28))
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         }
+
         val title = TextView(this).apply {
             text = "AScan"
             setTextColor(Color.parseColor("#E879F9"))
@@ -55,6 +62,7 @@ class MainActivity : AppCompatActivity() {
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
         }
+
         val sub = TextView(this).apply {
             text = "Digite o codigo de acesso"
             setTextColor(Color.parseColor("#8B8BA3"))
@@ -62,77 +70,112 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
             setPadding(0, dp(8), 0, dp(24))
         }
+
         val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             hint = "Codigo"
             setHintTextColor(Color.parseColor("#5A5A72"))
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#1A1A26"))
+            setBackgroundColor(Color.parseColor("#1A1A24"))
             setPadding(dp(16), dp(14), dp(16), dp(14))
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            isSingleLine = true
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
+
         val btn = Button(this).apply {
-            text = "DESBLOQUEAR"
+            text = "ENTRAR"
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#A855F7"))
-            setPadding(dp(16), dp(14), dp(16), dp(14))
+            setBackgroundColor(Color.parseColor("#7C3AED"))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(16) }
+            setOnClickListener {
+                val code = input.text?.toString().orEmpty()
+                if (UnlockStore.tryUnlock(this@MainActivity, code)) {
+                    openApp()
+                } else {
+                    Toast.makeText(this@MainActivity, "Codigo invalido", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
-        val info = TextView(this).apply {
-            text = "t.me/ApkBugado"
-            setTextColor(Color.parseColor("#5A5A72"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            gravity = Gravity.CENTER
-            setPadding(0, dp(20), 0, 0)
-        }
-        btn.setOnClickListener {
-            val code = input.text?.toString().orEmpty()
-            if (UnlockStore.unlock(this@MainActivity, code)) {
-                Toast.makeText(this@MainActivity, "Acesso liberado", Toast.LENGTH_SHORT).show()
-                openApp()
-            } else Toast.makeText(this@MainActivity, "Codigo invalido", Toast.LENGTH_SHORT).show()
-        }
-        root.addView(title); root.addView(sub)
-        root.addView(input, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(12) })
-        root.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        root.addView(info)
+
+        root.addView(title)
+        root.addView(sub)
+        root.addView(input)
+        root.addView(btn)
         setContentView(root)
     }
 
     inner class AScanBridge {
-        @JavascriptInterface
-        fun httpGet(url: String, timeoutMs: Int): String {
-            val result = AtomicReference(JSONObject().put("ok", false).put("status", 0).put("body", "").put("error", "timeout").toString())
-            val ms = timeoutMs.coerceIn(3000, 60000)
-            val fut = httpExecutor.submit {
-                var conn: HttpURLConnection? = null
-                try {
-                    conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                        connectTimeout = ms; readTimeout = ms; requestMethod = "GET"
-                        instanceFollowRedirects = true; useCaches = false
-                        setRequestProperty("Accept", "application/json,text/plain,*/*")
-                        setRequestProperty("User-Agent", "AScanApp/1.0")
-                    }
-                    val code = conn.responseCode
-                    val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-                    val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
-                    result.set(JSONObject().put("ok", code in 200..299).put("status", code).put("body", body).put("error", if (code in 200..299) "" else "HTTP $code").toString())
-                } catch (e: Exception) {
-                    result.set(JSONObject().put("ok", false).put("status", 0).put("body", "").put("error", e.message ?: "erro").toString())
-                } finally { conn?.disconnect() }
+        private fun doHttp(url: String, timeoutMs: Int): String {
+            return try {
+                val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = timeoutMs.coerceIn(2000, 30000)
+                    readTimeout = timeoutMs.coerceIn(2000, 30000)
+                    requestMethod = "GET"
+                    instanceFollowRedirects = true
+                    setRequestProperty("User-Agent", "Mozilla/5.0 AScanApp/1.0")
+                    setRequestProperty("Accept", "application/json,*/*")
+                }
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                JSONObject()
+                    .put("ok", code in 200..299)
+                    .put("status", code)
+                    .put("body", body)
+                    .toString()
+            } catch (e: Exception) {
+                JSONObject()
+                    .put("ok", false)
+                    .put("status", 0)
+                    .put("error", e.message ?: "net")
+                    .put("body", "")
+                    .toString()
             }
-            try { fut.get((ms + 2000).toLong(), TimeUnit.MILLISECONDS) } catch (_: Exception) { fut.cancel(true) }
-            return result.get()
         }
 
         @JavascriptInterface
-        fun closeApp() { runOnUiThread { finishAffinity() } }
+        fun httpGet(url: String, timeoutMs: Int): String {
+            return doHttp(url, timeoutMs)
+        }
+
+        @JavascriptInterface
+        fun httpGetAsync(url: String, timeoutMs: Int, callbackId: String) {
+            httpExecutor.execute {
+                val result = doHttp(url, timeoutMs)
+                val safeId = callbackId.replace("'", "").replace("\\", "").replace("\n", "")
+                val b64 = android.util.Base64.encodeToString(
+                    result.toByteArray(Charsets.UTF_8),
+                    android.util.Base64.NO_WRAP
+                )
+                runOnUiThread {
+                    webView?.evaluateJavascript(
+                        "try{window.__ascanCb&&window.__ascanCb('$safeId','$b64');}catch(e){}",
+                        null
+                    )
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun closeApp() {
+            runOnUiThread { finishAffinity() }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun openApp() {
-        val html = try { EmbeddedUi.html(this) } catch (e: Exception) {
-            Toast.makeText(this, "Erro ao carregar UI: ${e.message}", Toast.LENGTH_LONG).show(); return
+        val html = try {
+            EmbeddedUi.html(this)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao carregar UI: ${e.message}", Toast.LENGTH_LONG).show()
+            return
         }
+
         val wv = WebView(this).apply {
             setBackgroundColor(Color.parseColor("#0A0A0F"))
             settings.javaScriptEnabled = true
@@ -153,11 +196,20 @@ class MainActivity : AppCompatActivity() {
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
             addJavascriptInterface(AScanBridge(), "AScanNative")
             webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = false
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean = false
             }
             webChromeClient = WebChromeClient()
         }
-        wv.loadDataWithBaseURL("https://app.ascan.local/", html, "text/html", "UTF-8", null)
+        wv.loadDataWithBaseURL(
+            "https://app.ascan.local/",
+            html,
+            "text/html",
+            "UTF-8",
+            null
+        )
         webView = wv
         setContentView(wv)
     }
@@ -165,10 +217,17 @@ class MainActivity : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         val wv = webView
-        if (wv != null && wv.canGoBack()) wv.goBack() else super.onBackPressed()
+        if (wv != null && wv.canGoBack()) {
+            wv.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     override fun onDestroy() {
-        webView?.destroy(); webView = null; httpExecutor.shutdownNow(); super.onDestroy()
+        webView?.destroy()
+        webView = null
+        httpExecutor.shutdownNow()
+        super.onDestroy()
     }
 }
