@@ -1,8 +1,11 @@
 package com.ascan.app
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.util.TypedValue
@@ -10,6 +13,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -20,6 +24,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -29,7 +34,29 @@ import java.util.concurrent.Executors
 class MainActivity : AppCompatActivity() {
 
     private var webView: WebView? = null
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val httpExecutor = Executors.newFixedThreadPool(12)
+
+    private val fileChooserLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val cb = filePathCallback
+        filePathCallback = null
+        if (cb == null) return@registerForActivityResult
+        if (result.resultCode != Activity.RESULT_OK || result.data == null) {
+            cb.onReceiveValue(null)
+            return@registerForActivityResult
+        }
+        val data = result.data!!
+        val uris: Array<Uri>? = when {
+            data.clipData != null -> {
+                Array(data.clipData!!.itemCount) { i -> data.clipData!!.getItemAt(i).uri }
+            }
+            data.data != null -> arrayOf(data.data!!)
+            else -> null
+        }
+        cb.onReceiveValue(uris)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,8 +144,13 @@ class MainActivity : AppCompatActivity() {
                     readTimeout = timeoutMs.coerceIn(2000, 30000)
                     requestMethod = "GET"
                     instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", "Mozilla/5.0 AScanApp/1.0")
-                    setRequestProperty("Accept", "application/json,*/*")
+                    setRequestProperty(
+                        "User-Agent",
+                        "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    )
+                    setRequestProperty("Accept", "application/json,text/plain,*/*")
+                    setRequestProperty("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
+                    setRequestProperty("Cache-Control", "no-cache")
                 }
                 val code = conn.responseCode
                 val stream = if (code in 200..299) conn.inputStream else conn.errorStream
@@ -186,7 +218,8 @@ class MainActivity : AppCompatActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             settings.cacheMode = WebSettings.LOAD_DEFAULT
-            settings.userAgentString = settings.userAgentString + " AScanApp/1.0"
+            settings.userAgentString =
+                "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
             settings.builtInZoomControls = false
             settings.displayZoomControls = false
             settings.useWideViewPort = true
@@ -201,7 +234,37 @@ class MainActivity : AppCompatActivity() {
                     request: WebResourceRequest?
                 ): Boolean = false
             }
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
+                    this@MainActivity.filePathCallback = filePathCallback
+                    return try {
+                        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "*/*"
+                            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/plain", "text/*", "*/*"))
+                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                        }
+                        fileChooserLauncher.launch(
+                            Intent.createChooser(intent, "Escolher arquivo .txt")
+                        )
+                        true
+                    } catch (e: Exception) {
+                        this@MainActivity.filePathCallback = null
+                        filePathCallback?.onReceiveValue(null)
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Nao foi possivel abrir o seletor de arquivos",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        false
+                    }
+                }
+            }
         }
         wv.loadDataWithBaseURL(
             "https://app.ascan.local/",
