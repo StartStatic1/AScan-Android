@@ -105,46 +105,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectUiFixes(wv: WebView) {
-        val js = """
-        (function(){
-          function rebind(sel, fn){
-            var el=document.querySelector(sel); if(!el||!el.parentNode) return;
-            var n=el.cloneNode(true); el.parentNode.replaceChild(n,el);
-            n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn();});
-          }
-          function allRaws(){
-            try{ if(typeof getAllRaws==='function') return getAllRaws();
-              var all=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) all=all.concat(state.hitsLog[s]); }
-              return all; }catch(e){ return []; }
-          }
-          function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
-          function doCopy(){
-            var h=allRaws(); if(!h||!h.length){ tmsg('Nenhum hit.'); return; }
-            var text=h.join('\n\n');
-            function ok(){ tmsg('Hits copiados!'); }
-            if(navigator.clipboard&&navigator.clipboard.writeText){
-              navigator.clipboard.writeText(text).then(ok).catch(function(){
-                try{ var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }catch(e){ tmsg('Falha ao copiar'); }
-              });
-            } else {
-              try{ var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }catch(e){ tmsg('Falha ao copiar'); }
-            }
-          }
-          function doDownload(){
-            var h=allRaws(); if(!h||!h.length){ tmsg('Nenhum hit.'); return; }
-            var text='\uFEFF'+h.join('\n\n');
-            var name='hits_AScan_'+(new Date().toISOString().slice(0,10))+'.txt';
-            try{
-              if(window.AScanNative && typeof AScanNative.saveText==='function'){
-                AScanNative.saveText(name, text); tmsg('Salvo em Downloads'); return;
-              }
-            }catch(e){}
-            tmsg('Use Copiar hits');
-          }
-          rebind('.btn-copy', doCopy);
-          rebind('#btn-download', doDownload);
-        })();
-        """.trimIndent()
+        val js = try {
+            assets.open("inject_v111.js").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } catch (e: Exception) {
+            """
+            (function(){
+              function tmsg(m){ try{ if(typeof toast==='function') toast(m);}catch(e){} }
+              function allRaws(){ try{ if(typeof getAllRaws==='function') return getAllRaws(); var a=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) a=a.concat(state.hitsLog[s]); } return a;}catch(e){return [];} }
+              function rebind(sel,fn){ var el=document.querySelector(sel); if(!el||!el.parentNode)return; var n=el.cloneNode(true); el.parentNode.replaceChild(n,el); n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn();}); }
+              rebind('.btn-copy', function(){ var h=allRaws(); if(!h.length){tmsg('Nenhum hit.');return;} var t=h.join('\n\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){tmsg('Hits copiados!');}); });
+              rebind('#btn-download', function(){ var h=allRaws(); if(!h.length){tmsg('Nenhum hit.');return;} if(window.AScanNative&&AScanNative.saveText){ AScanNative.saveText('hits_AScan.txt','\uFEFF'+h.join('\n\n')); tmsg('Salvo em Downloads'); }});
+            })();
+            """.trimIndent()
+        }
         wv.evaluateJavascript(js, null)
     }
 
