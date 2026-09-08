@@ -171,8 +171,48 @@ class MainActivity : AppCompatActivity() {
         })();
     """.trimIndent()
 
+    private fun injectHitsButtonsJs(): String = """
+        (function(){
+          function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
+          function allRaws(){
+            try{
+              if(typeof getAllRaws==='function') return getAllRaws();
+              var a=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) a=a.concat(state.hitsLog[s]); }
+              return a;
+            }catch(e){ return []; }
+          }
+          function bind(sel, fn){
+            var el=document.querySelector(sel); if(!el||!el.parentNode) return;
+            var n=el.cloneNode(true); el.parentNode.replaceChild(n,el);
+            n.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); fn(); });
+          }
+          bind('#btn-download', function(){
+            var h=allRaws();
+            if(!h||!h.length){ tmsg('Nenhum HIT para salvar (so conta HITS, nao erros)'); return; }
+            var name='hits_AScan_'+(new Date().toISOString().slice(0,10))+'.txt';
+            var text='\\uFEFF'+h.join('\\n\\n');
+            try{
+              if(window.AScanNative && AScanNative.saveText){
+                var r=AScanNative.saveText(name, text);
+                tmsg(r&&String(r).indexOf('fail')===0 ? ('Falha: '+r) : ('Salvo em Downloads/'+name));
+              } else tmsg('Bridge saveText ausente');
+            }catch(e){ tmsg('Erro ao salvar: '+e); }
+          });
+          bind('.btn-copy', function(){
+            var h=allRaws();
+            if(!h||!h.length){ tmsg('Nenhum HIT para copiar'); return; }
+            var t=h.join('\\n\\n');
+            if(navigator.clipboard&&navigator.clipboard.writeText){
+              navigator.clipboard.writeText(t).then(function(){ tmsg('Hits copiados!'); }).catch(function(){ tmsg('Falha ao copiar'); });
+            } else tmsg('Clipboard indisponivel');
+          });
+          return 'hits-bound';
+        })();
+    """.trimIndent()
+
     private fun injectUiFixes(wv: WebView) {
         wv.evaluateJavascript(injectProxyCardJs(), null)
+        wv.evaluateJavascript(injectHitsButtonsJs(), null)
 
         val js = try {
             assets.open("inject_v111.js").bufferedReader(Charsets.UTF_8).use { it.readText() }
@@ -185,9 +225,11 @@ class MainActivity : AppCompatActivity() {
 
         wv.postDelayed({
             wv.evaluateJavascript(injectProxyCardJs(), null)
+            wv.evaluateJavascript(injectHitsButtonsJs(), null)
         }, 600)
         wv.postDelayed({
             wv.evaluateJavascript(injectProxyCardJs(), null)
+            wv.evaluateJavascript(injectHitsButtonsJs(), null)
         }, 1500)
     }
 
