@@ -135,5 +135,26 @@
   rebind('#btn-download', doDownload);
 
   refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.1.1 OK');
+  if(hasNative()) tmsg('AScan 1.1.2 OK');
+
+  function ensureScanFeedback(){
+    try{
+      var btn=document.querySelector('.btn-start');
+      if(!btn || btn.__ascanScanBound) return;
+      btn.__ascanScanBound=1;
+      btn.addEventListener('click', function(){
+        setTimeout(function(){
+          try{
+            var srv=(document.getElementById('servidorUnico')||{}).value||'';
+            if(!String(srv).trim()){ tmsg('Preencha o servidor!'); return; }
+            var hasFile=false;
+            try{ var f=document.getElementById('combo'); hasFile=f&&f.files&&f.files[0]; }catch(e){}
+            var hasOnline=!!(window.loadedComboText);
+            if(!hasFile && !hasOnline){ tmsg('Selecione combo (.txt) ou use combo online!'); }
+          }catch(e){}
+        }, 30);
+      }, true);
+    }catch(e){}
+  }
+  ensureScanFeedback();
 })();
