@@ -1,5 +1,5 @@
 (function(){
-  if(window.__ascanFixV120) return; window.__ascanFixV120=1;
+  if(window.__ascanFixV121) return; window.__ascanFixV121=1;
   function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
   function hasNative(){ return !!(window.AScanNative && typeof AScanNative.httpGet==='function'); }
   function proxyCount(){
@@ -240,9 +240,18 @@
   };
   try{
     var bco=document.getElementById('btn-combo-online');
-    if(bco){ bco.onclick=function(e){ e&&e.preventDefault(); loadOnlineComboList(); }; }
+    if(bco&&bco.parentNode){
+      var nb=bco.cloneNode(true);
+      bco.parentNode.replaceChild(nb,bco);
+      nb.disabled=false;
+      nb.addEventListener('click',function(e){
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        loadOnlineComboList();
+      }, true);
+    }
   }catch(e){}
+  try{ window.loadOnlineComboList = loadOnlineComboList; }catch(e){}
 
   refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.2.0 OK');
+  if(hasNative()) tmsg('AScan 1.2.1 OK');
 })();
