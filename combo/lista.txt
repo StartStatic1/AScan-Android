@@ -1,0 +1,10 @@
+# Nome amigavel|URL raw (pasta combo deste repo)
+# Suba os arquivos .txt nesta pasta e ajuste as linhas abaixo.
+# Enquanto os arquivos nao existirem aqui, o app ainda tenta o repo AScan-Combos como fallback.
+Pro|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo1.txt
+Plus|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo2.txt
+Top|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo3.txt
+Lite|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo4.txt
+Basic|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo5.txt
+Atk|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo6.txt
+Expert|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo7.txt
