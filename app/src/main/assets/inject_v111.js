@@ -1,5 +1,5 @@
 (function(){
-  if(window.__ascanFixV115) return; window.__ascanFixV115=1;
+  if(window.__ascanFixV117) return; window.__ascanFixV117=1;
   function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
   function hasNative(){ return !!(window.AScanNative && typeof AScanNative.httpGet==='function'); }
   function proxyCount(){
@@ -38,8 +38,7 @@
   if(typeof testarNoServidor==='function'){
     var _tn=testarNoServidor;
     window.testarNoServidor=async function(cred,servidor){
-      var useProxy = proxyCount()>0;
-      if(useProxy && hasNative() && AScanNative.httpGetAsync){
+      if(hasNative() && AScanNative.httpGetAsync){
         var api=servidor.url+'/player_api.php?username='+encodeURIComponent(cred.user)+'&password='+encodeURIComponent(cred.pass);
         try{
           var j=await nativeHttpAsync(api,10000);
@@ -169,5 +168,5 @@
   rebind('#btn-download',function(){try{var h=typeof getAllRaws==='function'?getAllRaws():[];if(!h.length){tmsg('Nenhum hit');return;}if(AScanNative&&AScanNative.saveText){AScanNative.saveText('hits_AScan.txt','\uFEFF'+h.join('\n\n'));tmsg('Salvo Downloads');}}catch(e){}});
 
   refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.1.5 OK');
+  if(hasNative()) tmsg('AScan 1.1.7 OK');
 })();
