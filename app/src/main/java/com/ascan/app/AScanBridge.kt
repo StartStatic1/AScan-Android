@@ -79,10 +79,21 @@ class AScanBridge(
         }
     }
 
+    private fun slimBody(body: String): String {
+        if (body.length <= 6000) return body
+        return try {
+            val jo = JSONObject(body)
+            val ui = jo.optJSONObject("user_info")
+            JSONObject().put("user_info", ui ?: JSONObject()).toString()
+        } catch (_: Exception) {
+            body.take(4000)
+        }
+    }
+
     private fun doHttp(url: String, timeoutMs: Int, forceProxy: Boolean = true): String {
         return try {
             val timeout = timeoutMs.coerceIn(2000, 30000)
-            val proxy = if (forceProxy) nextProxy() else null
+            val proxy = if (forceProxy && proxies.isNotEmpty() && proxyMode == "on") nextProxy() else null
             val conn = (if (proxy != null) URL(url).openConnection(proxy) else URL(url).openConnection()) as HttpURLConnection
             conn.connectTimeout = timeout
             conn.readTimeout = timeout
@@ -99,7 +110,7 @@ class AScanBridge(
                 throw e
             }
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-            val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            val body = slimBody(stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty())
             JSONObject().put("ok", code in 200..299).put("status", code).put("body", body).toString()
         } catch (e: Exception) {
             JSONObject().put("ok", false).put("status", 0).put("error", e.message ?: "net").put("body", "").toString()
@@ -200,33 +211,32 @@ class AScanBridge(
     @JavascriptInterface
     fun saveText(filename: String, content: String): String {
         return try {
-            val safeName = filename.replace(Regex("[^a-zA-Z0-9._-]"), "_").ifBlank { "hits_AScan.txt" }
+            val name = filename.ifBlank { "hits_AScan.txt" }.replace(Regex("[^a-zA-Z0-9._-]"), "_")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val values = ContentValues().apply {
-                    put(MediaStore.Downloads.DISPLAY_NAME, safeName)
+                    put(MediaStore.Downloads.DISPLAY_NAME, name)
                     put(MediaStore.Downloads.MIME_TYPE, "text/plain")
                     put(MediaStore.Downloads.IS_PENDING, 1)
                 }
                 val resolver = activity.contentResolver
-                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return "erro:uri"
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: return "fail:insert"
                 resolver.openOutputStream(uri)?.use { it.write(content.toByteArray(Charsets.UTF_8)) }
                 values.clear()
                 values.put(MediaStore.Downloads.IS_PENDING, 0)
                 resolver.update(uri, values, null, null)
             } else {
+                @Suppress("DEPRECATION")
                 val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 if (!dir.exists()) dir.mkdirs()
-                FileOutputStream(File(dir, safeName)).use { it.write(content.toByteArray(Charsets.UTF_8)) }
+                FileOutputStream(File(dir, name)).use { it.write(content.toByteArray(Charsets.UTF_8)) }
             }
             activity.runOnUiThread {
-                Toast.makeText(activity, "Salvo em Downloads: $safeName", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, "Salvo em Downloads/$name", Toast.LENGTH_SHORT).show()
             }
             "ok"
         } catch (e: Exception) {
-            activity.runOnUiThread {
-                Toast.makeText(activity, "Erro ao salvar: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-            "erro:${e.message}"
+            "fail:${e.message}"
         }
     }
 
