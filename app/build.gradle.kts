@@ -32,11 +32,13 @@ android {
         jvmTarget = "17"
     }
     buildFeatures {
-        buildConfig = true
+        viewBinding = false
     }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.webkit:webkit:1.10.0")
 }
