@@ -106,21 +106,89 @@ class MainActivity : AppCompatActivity() {
         setContentView(root)
     }
 
+    private fun injectProxyCardJs(): String = """
+        (function(){
+          try{
+            if(document.getElementById('ascan-proxy-card')) return 'exists';
+            var actions = document.querySelector('.actions');
+            var btn = document.querySelector('.btn-start');
+            var anchor = actions || (btn && btn.parentNode);
+            if(!anchor) return 'no-anchor';
+            var host = anchor.parentNode || document.body;
+            var card = document.createElement('div');
+            card.id = 'ascan-proxy-card';
+            card.className = 'card';
+            card.style.cssText = 'margin:12px 0;padding:12px;border-radius:12px;background:#14141c;border:1px solid #2a2a3a;';
+            card.innerHTML = '<div style="font-weight:700;margin-bottom:10px;color:#e879f9">Proxy</div>'
+              + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
+              + '<button type="button" id="btn-proxy-online" style="flex:1;min-width:90px;padding:10px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:600">Online</button>'
+              + '<button type="button" id="btn-proxy-offline" style="flex:1;min-width:90px;padding:10px;border:0;border-radius:10px;background:#2a2a3a;color:#fff">Offline</button>'
+              + '<button type="button" id="btn-proxy-clear" style="flex:1;min-width:90px;padding:10px;border:0;border-radius:10px;background:#2a2a3a;color:#fff">Limpar</button>'
+              + '</div>'
+              + '<label style="font-size:12px;color:#8b8ba3">Cole proxies offline (host:port)</label>'
+              + '<textarea id="proxy-paste" rows="3" placeholder="1.2.3.4:8080" style="width:100%;margin-top:6px;padding:10px;border-radius:9px;border:1px solid #333;background:#1a1a24;color:#fff;font-family:monospace;font-size:12px"></textarea>'
+              + '<div id="proxy-status" style="margin-top:8px;font-size:13px;color:#8b8ba3">Sem proxy (direto)</div>';
+            host.insertBefore(card, anchor);
+            function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
+            function refresh(){
+              var el=document.getElementById('proxy-status'); if(!el) return;
+              try{
+                if(window.AScanNative && AScanNative.getProxyStatus){
+                  var st=JSON.parse(AScanNative.getProxyStatus());
+                  el.textContent = st.count>0 ? ('Proxy ON · '+st.count) : 'Sem proxy (direto)';
+                  el.style.color = st.count>0 ? '#4ade80' : '#8b8ba3';
+                  return;
+                }
+              }catch(e){}
+              el.textContent='Sem proxy (direto)';
+            }
+            var bo=document.getElementById('btn-proxy-online');
+            var bf=document.getElementById('btn-proxy-offline');
+            var bc=document.getElementById('btn-proxy-clear');
+            if(bo) bo.onclick=function(){
+              if(!(window.AScanNative&&AScanNative.loadProxiesOnline)){ tmsg('Bridge ausente'); return; }
+              tmsg('Baixando proxies (20-40s)...');
+              setTimeout(function(){
+                try{ var n=AScanNative.loadProxiesOnline(); refresh(); tmsg(n>0?('OK '+n+' proxies'):'Nenhum proxy'); }
+                catch(e){ tmsg('Erro: '+e); }
+              }, 40);
+            };
+            if(bf) bf.onclick=function(){
+              var t=((document.getElementById('proxy-paste')||{}).value||'').trim();
+              if(!t){ tmsg('Cole host:port'); return; }
+              if(!(window.AScanNative&&AScanNative.loadProxiesFromText)){ tmsg('Bridge ausente'); return; }
+              try{ var n=AScanNative.loadProxiesFromText(t); refresh(); tmsg(n>0?('OK '+n+' offline'):'Formato invalido'); }
+              catch(e){ tmsg('Erro'); }
+            };
+            if(bc) bc.onclick=function(){
+              try{ if(window.AScanNative&&AScanNative.clearProxies) AScanNative.clearProxies(); }catch(e){}
+              var el=document.getElementById('proxy-paste'); if(el) el.value='';
+              refresh(); tmsg('Proxies limpos');
+            };
+            refresh();
+            return 'ok';
+          }catch(e){ return 'err:'+e; }
+        })();
+    """.trimIndent()
+
     private fun injectUiFixes(wv: WebView) {
+        wv.evaluateJavascript(injectProxyCardJs(), null)
+
         val js = try {
             assets.open("inject_v111.js").bufferedReader(Charsets.UTF_8).use { it.readText() }
         } catch (e: Exception) {
-            """
-            (function(){
-              function tmsg(m){ try{ if(typeof toast==='function') toast(m);}catch(e){} }
-              function allRaws(){ try{ if(typeof getAllRaws==='function') return getAllRaws(); var a=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) a=a.concat(state.hitsLog[s]); } return a;}catch(e){return [];} }
-              function rebind(sel,fn){ var el=document.querySelector(sel); if(!el||!el.parentNode)return; var n=el.cloneNode(true); el.parentNode.replaceChild(n,el); n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn();}); }
-              rebind('.btn-copy', function(){ var h=allRaws(); if(!h.length){tmsg('Nenhum hit.');return;} var t=h.join('\n\n'); if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){tmsg('Hits copiados!');}); });
-              rebind('#btn-download', function(){ var h=allRaws(); if(!h.length){tmsg('Nenhum hit.');return;} if(window.AScanNative&&AScanNative.saveText){ AScanNative.saveText('hits_AScan.txt','\uFEFF'+h.join('\n\n')); tmsg('Salvo em Downloads'); }});
-            })();
-            """.trimIndent()
+            "void 0;"
         }
-        wv.evaluateJavascript(js, null)
+        if (js.isNotBlank() && js != "void 0;") {
+            wv.evaluateJavascript(js, null)
+        }
+
+        wv.postDelayed({
+            wv.evaluateJavascript(injectProxyCardJs(), null)
+        }, 600)
+        wv.postDelayed({
+            wv.evaluateJavascript(injectProxyCardJs(), null)
+        }, 1500)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
