@@ -2,6 +2,7 @@ package com.ascan.app
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -12,6 +13,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.JsResult
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -155,6 +157,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             webChromeClient = object : WebChromeClient() {
+                override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                    runOnUiThread {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setMessage(message ?: "")
+                            .setPositiveButton("OK") { _, _ -> result?.confirm() }
+                            .setOnCancelListener { result?.confirm() }
+                            .show()
+                    }
+                    return true
+                }
+                override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                    runOnUiThread {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setMessage(message ?: "")
+                            .setPositiveButton("OK") { _, _ -> result?.confirm() }
+                            .setNegativeButton("Cancelar") { _, _ -> result?.cancel() }
+                            .setOnCancelListener { result?.cancel() }
+                            .show()
+                    }
+                    return true
+                }
                 override fun onShowFileChooser(
                     webView: WebView?,
                     filePathCallback: ValueCallback<Array<Uri>>?,
