@@ -1,3 +1,0 @@
-# OPCIONAL — o app NAO precisa deste arquivo.
-# Ele lista sozinho todo .txt dentro de combo/ (exceto lista.txt).
-# So solte o arquivo .txt na pasta e aperte "Usar combo online" no app.
