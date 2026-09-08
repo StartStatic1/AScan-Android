@@ -1,18 +1,12 @@
-# Combos do AScan
+# Combos (igual AgenT)
 
-Coloque aqui os arquivos `.txt` de combo (formato `user:pass` por linha).
+**So solte o `.txt` nesta pasta.** O app lista automaticamente.
 
-## Como adicionar
+## Passos
 
-1. No GitHub: **Add file → Upload files**
-2. Envie `combo1.txt`, `combo2.txt`, etc.
-3. Edite `lista.txt` se quiser nomes amigáveis (Pro, Plus…)
+1. GitHub → esta pasta `combo/`
+2. **Add file → Upload files**
+3. Envie `qualquer_nome.txt` (formato `user:pass` por linha)
+4. No app: **Usar combo online** → aparece o nome do arquivo
 
-## Formato de `lista.txt`
-
-```
-# Nome|URL raw
-Pro|https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/combo1.txt
-```
-
-O app também lista automaticamente todo `.txt` desta pasta (exceto `lista.txt`).
+Nao precisa de lista de links nem de outro repositorio.
