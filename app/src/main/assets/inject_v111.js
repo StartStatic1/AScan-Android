@@ -1,5 +1,5 @@
 (function(){
-  if(window.__ascanFixV118) return; window.__ascanFixV118=1;
+  if(window.__ascanFixV119) return; window.__ascanFixV119=1;
   function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
   function hasNative(){ return !!(window.AScanNative && typeof AScanNative.httpGet==='function'); }
   function proxyCount(){
@@ -131,7 +131,7 @@
     try{
       if(hasNative()&&AScanNative.getProxyStatus){
         var st=JSON.parse(AScanNative.getProxyStatus());
-        el.textContent=st.count>0?('Proxy ON · '+st.count):'Sem proxy (direto)';
+        el.textContent=st.count>0?('Proxy ON \u00b7 '+st.count):'Sem proxy (direto)';
         el.style.color=st.count>0?'#4ade80':'';
         return;
       }
@@ -154,7 +154,7 @@
   if(bc)bc.onclick=function(){
     try{if(hasNative()&&AScanNative.clearProxies)AScanNative.clearProxies();}catch(e){}
     var el=document.getElementById('proxy-paste'); if(el) el.value='';
-    refreshProxyStatus(); tmsg('Proxies limpos — modo direto');
+    refreshProxyStatus(); tmsg('Proxies limpos');
   };
 
   rebind('.btn-start', function(){
@@ -187,6 +187,90 @@
     if(AScanNative&&AScanNative.saveText){ AScanNative.saveText(name,text); tmsg('Salvo Downloads/'+name); }
   });
 
+  window.COMBO_LIST_URL = 'https://raw.githubusercontent.com/StartStatic1/AScan-Android/main/combo/lista.txt';
+  window.loadOnlineComboList = async function(){
+    var sel=$('combo-online-select'), btn=$('btn-combo-online'), st=$('combo-status');
+    if(!sel||!btn){ tmsg('UI combo ausente'); return; }
+    btn.disabled=true; st.textContent='Buscando combos...'; st.className='combo-status loading';
+    onlineCombos=[];
+    var nameMap={};
+    function prettyName(filename,url){
+      var f=(filename||'').toLowerCase();
+      if(nameMap[f]) return nameMap[f];
+      if(url&&nameMap[url]) return nameMap[url];
+      var n=(filename||url||'Combo').replace(/\.txt$/i,'').replace(/^combo[_-]?/i,'');
+      if(/^\d+$/.test(n)) return 'Combo '+n;
+      return n? (n.charAt(0).toUpperCase()+n.slice(1)) : 'Combo';
+    }
+    function norm(u){
+      u=(u||'').trim(); if(!u) return '';
+      var blob=u.match(/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/i);
+      if(blob) return 'https://raw.githubusercontent.com/'+blob[1]+'/'+blob[2]+'/'+blob[3]+'/'+blob[4];
+      return u;
+    }
+    async function loadLista(url){
+      try{
+        var texto=await fetchText(url, 12000);
+        texto.split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l&&l.indexOf('#')!==0;}).forEach(function(line){
+          if(line.indexOf('|')<0) return;
+          var p=line.split('|'); var name=(p[0]||'').trim(); var u=norm((p[1]||'').trim());
+          if(!u) return;
+          var file=(u.split('/').pop()||'').toLowerCase();
+          nameMap[file]=name; nameMap[u]=name;
+          onlineCombos.push({name:name,url:u});
+        });
+      }catch(e){}
+    }
+    async function loadApi(owner,repo,path){
+      try{
+        var api='https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+(path||'');
+        var raw=hasNative()? AScanNative.httpGet(api,15000) : null;
+        var files;
+        if(raw){ try{ var j=JSON.parse(raw); if(j&&j.ok&&j.body) files=JSON.parse(j.body); }catch(e){} }
+        if(!files){
+          var res=await fetch(api,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+          if(res.ok) files=await res.json();
+        }
+        if(!Array.isArray(files)) return;
+        files.forEach(function(f){
+          if(!f||f.type!=='file'||!/\.txt$/i.test(f.name||'')||f.name.toLowerCase()==='lista.txt'||!f.download_url) return;
+          var url=f.download_url;
+          if(onlineCombos.some(function(c){return c.url===url;})) return;
+          onlineCombos.push({name:prettyName(f.name,url),url:url});
+        });
+      }catch(e){}
+    }
+    try{
+      await loadLista(window.COMBO_LIST_URL);
+      await loadApi('StartStatic1','AScan-Android','combo');
+      if(!onlineCombos.length){
+        await loadLista('https://raw.githubusercontent.com/StartStatic1/AScan-Combos/main/lista.txt');
+        await loadApi('StartStatic1','AScan-Combos','');
+      }
+      var seen={};
+      onlineCombos=onlineCombos.filter(function(c){
+        var k=(c.url||'').toLowerCase(); if(!k||seen[k]) return false; seen[k]=1; return true;
+      });
+      if(!onlineCombos.length) throw new Error('Nenhum combo online');
+      sel.innerHTML='<option value="">Selecione...</option>';
+      onlineCombos.forEach(function(c,i){
+        var o=document.createElement('option'); o.value=String(i); o.textContent=c.name; sel.appendChild(o);
+      });
+      sel.classList.remove('hidden');
+      st.textContent='OK '+onlineCombos.length+' combo(s)';
+      st.className='combo-status ok';
+      tmsg(onlineCombos.length+' combo(s) online');
+      if(onlineCombos.length===1){ sel.value='0'; if(typeof loadSelectedOnlineCombo==='function') await loadSelectedOnlineCombo(); }
+    }catch(e){
+      onlineCombos=[]; sel.classList.add('hidden');
+      st.textContent='Erro: '+(e.message||''); st.className='combo-status err';
+    }finally{ btn.disabled=false; }
+  };
+  try{
+    var bco=document.getElementById('btn-combo-online');
+    if(bco){ bco.onclick=function(e){ e&&e.preventDefault(); loadOnlineComboList(); }; }
+  }catch(e){}
+
   refreshProxyStatus();
-  if(hasNative()) tmsg('AScan 1.1.8 OK');
+  if(hasNative()) tmsg('AScan 1.1.9 OK');
 })();
