@@ -10,19 +10,18 @@ import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 object EmbeddedUi {
-    // UI valida em CDN (commit 941f2a0e — build #23)
+    // UI com proxy online/offline (AScan-Combos ascan.b64)
     private val SOURCES = arrayOf(
-        "https://cdn.jsdelivr.net/gh/StartStatic1/AScan-Android@941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64",
-        "https://raw.githack.com/StartStatic1/AScan-Android/941f2a0e6fe702710054ac93121da8405eafd51f/app/src/main/assets/ascan.b64"
+        "https://cdn.jsdelivr.net/gh/StartStatic1/AScan-Combos@main/ascan.b64",
+        "https://raw.githubusercontent.com/StartStatic1/AScan-Combos/main/ascan.b64",
+        "https://cdn.jsdelivr.net/gh/StartStatic1/AScan-Android@main/app/src/main/assets/ascan.b64"
     )
 
     private val io = Executors.newSingleThreadExecutor()
 
     fun html(context: Context): String {
-        // 1) asset local ascan.b64
         tryDecodeAsset(context, "ascan.b64")?.let { return it }
 
-        // 2) partes ascan0-3
         try {
             val sb = StringBuilder()
             for (i in 0..3) {
@@ -35,7 +34,6 @@ object EmbeddedUi {
             }
         } catch (_: Exception) {}
 
-        // 3) CDN (sempre funciona offline-build)
         var lastErr: Exception? = null
         for (url in SOURCES) {
             try {
@@ -64,7 +62,7 @@ object EmbeddedUi {
             connectTimeout = 20000
             readTimeout = 40000
             requestMethod = "GET"
-            setRequestProperty("User-Agent", "AScanApp/1.0")
+            setRequestProperty("User-Agent", "AScanApp/1.1")
             instanceFollowRedirects = true
         }
         if (conn.responseCode !in 200..299) {
