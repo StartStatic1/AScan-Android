@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
 
     private var webView: WebView? = null
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
-    private val httpExecutor = Executors.newFixedThreadPool(12)
+    private val httpExecutor = Executors.newFixedThreadPool(24)
 
     private val fileChooserLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             var h=allRaws();
             if(!h||!h.length){ tmsg('Nenhum HIT para salvar (so conta HITS, nao erros)'); return; }
             var name='hits_AScan_'+(new Date().toISOString().slice(0,10))+'.txt';
-            var text='\\uFEFF'+h.join('\\n\\n');
+            var text=String.fromCharCode(0xFEFF)+h.join(String.fromCharCode(10,10));
             try{
               if(window.AScanNative && AScanNative.saveText){
                 var r=AScanNative.saveText(name, text);
@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
           bind('.btn-copy', function(){
             var h=allRaws();
             if(!h||!h.length){ tmsg('Nenhum HIT para copiar'); return; }
-            var t=h.join('\\n\\n');
+            var t=h.join(String.fromCharCode(10,10));
             if(navigator.clipboard&&navigator.clipboard.writeText){
               navigator.clipboard.writeText(t).then(function(){ tmsg('Hits copiados!'); }).catch(function(){ tmsg('Falha ao copiar'); });
             } else tmsg('Clipboard indisponivel');
