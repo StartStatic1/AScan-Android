@@ -174,11 +174,16 @@ class MainActivity : AppCompatActivity() {
     private fun injectHitsButtonsJs(): String = """
         (function(){
           function tmsg(m){ try{ if(typeof toast==='function') toast(m); }catch(e){} }
+          function fixConex(t){
+            if(!t) return t;
+            var cx = window.__lastConex || '0/1';
+            return String(t).replace(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/g, 'Conexões  → '+cx);
+          }
           function allRaws(){
             try{
-              if(typeof getAllRaws==='function') return getAllRaws();
-              var a=[]; if(window.state&&state.hitsLog){ for(var s in state.hitsLog) a=a.concat(state.hitsLog[s]); }
-              return a;
+              var a = (typeof getAllRaws==='function') ? getAllRaws() : [];
+              if(!a.length && window.state&&state.hitsLog){ for(var s in state.hitsLog) a=a.concat(state.hitsLog[s]); }
+              return a.map(fixConex);
             }catch(e){ return []; }
           }
           function bind(sel, fn){
