@@ -69,6 +69,12 @@
         if(window.state&&state.servers){
           state.servers.forEach(function(s){ s.blocked=false; s.coolDownUntil=0; });
         }
+        if(r && r.status==='hit' && r.data && r.data.user_info){
+          var ui=r.data.user_info;
+          var ac = (ui.active_cons!=null) ? String(ui.active_cons) : '0';
+          var mc = (ui.max_connections!=null) ? String(ui.max_connections) : '1';
+          window.__lastConex = ac+'/'+mc;
+        }
       }catch(e){}
       return r;
     };
@@ -264,7 +270,7 @@
 (function(){
   function fixText(t){
     if(!t) return t;
-    return String(t).replace(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/g, 'Conexões  → 0/1');
+    var cx = window.__lastConex || '0/1'; return String(t).replace(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/g, 'Conexões  → '+cx);
   }
   var _get = window.getAllRaws;
   if(typeof _get === 'function'){
