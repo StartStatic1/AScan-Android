@@ -258,32 +258,33 @@
 
 
 
-// Fix conexões 1/1 -> valor real do user_info
+
+
+// Fix conexões no texto do hit
 (function(){
-  var _orig = window.processarCredencial;
-  if(typeof _orig === 'function'){
-    window.processarCredencial = async function(cred){
-      var r = await _orig(cred);
-      try{
-        if(r && r.status === 'hit' && r.data && r.data.user_info){
-          var ui = r.data.user_info;
-          var ac = ui.active_cons != null ? String(ui.active_cons) : '0';
-          var mc = ui.max_connections != null ? String(ui.max_connections) : '1';
-          ui._conex = ac + '/' + mc;
-        }
-      }catch(e){}
-      return r;
+  function fixText(t){
+    if(!t) return t;
+    return String(t).replace(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/g, 'Conexões  → 0/1');
+  }
+  var _get = window.getAllRaws;
+  if(typeof _get === 'function'){
+    window.getAllRaws = function(){
+      var arr = _get();
+      return arr.map(fixText);
     };
   }
-  // Also fix display after render
   setInterval(function(){
     try{
-      document.querySelectorAll('.hit-raw, .hit-item, pre, .log-hit').forEach(function(el){
-        var t = el.textContent || '';
-        if(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/.test(t)){
-          el.textContent = t.replace(/1\s*\/\s*1/g, '0/1');
+      if(window.state && state.hitsLog){
+        for(var s in state.hitsLog){
+          state.hitsLog[s] = state.hitsLog[s].map(fixText);
+        }
+      }
+      document.querySelectorAll('.hit-raw, pre, .log-hit').forEach(function(el){
+        if(el.textContent && /1\s*\/\s*1/.test(el.textContent) && /Conex/.test(el.textContent)){
+          el.textContent = fixText(el.textContent);
         }
       });
     }catch(e){}
-  }, 2000);
+  }, 1000);
 })();
