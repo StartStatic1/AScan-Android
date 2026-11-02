@@ -24,6 +24,7 @@ object EmbeddedUi {
     private val io = Executors.newSingleThreadExecutor()
 
     fun html(context: Context): String {
+        try { context.assets.open("ascan.html").bufferedReader().use { return it.readText() } } catch (_: Exception) {}
         tryDecodeAsset(context, "ascan.b64")?.let { return it }
 
         var lastErr: Exception? = null
