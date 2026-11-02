@@ -64,21 +64,21 @@ class MainActivity : AppCompatActivity() {
         fun dp(v: Int) = (v * density).toInt()
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.parseColor("#0A0A0F"))
+            setBackgroundColor(Color.parseColor("#0A0C10"))
             gravity = Gravity.CENTER
             setPadding(dp(28), dp(28), dp(28), dp(28))
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         }
         val title = TextView(this).apply {
             text = "AScan"
-            setTextColor(Color.parseColor("#E879F9"))
+            setTextColor(Color.parseColor("#22D3EE"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
         }
         val sub = TextView(this).apply {
             text = "Digite o codigo de acesso"
-            setTextColor(Color.parseColor("#8B8BA3"))
+            setTextColor(Color.parseColor("#8B96A8"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             gravity = Gravity.CENTER
             setPadding(0, dp(8), 0, dp(24))
@@ -88,14 +88,14 @@ class MainActivity : AppCompatActivity() {
             hint = "Codigo"
             setHintTextColor(Color.parseColor("#5A5A72"))
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#1A1A24"))
+            setBackgroundColor(Color.parseColor("#12151C"))
             setPadding(dp(16), dp(14), dp(16), dp(14))
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         val btn = Button(this).apply {
             text = "ENTRAR"
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#7C3AED"))
+            setBackgroundColor(Color.parseColor("#06B6D4"))
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) }
             setOnClickListener {
                 if (UnlockStore.unlock(this@MainActivity, input.text?.toString().orEmpty())) openApp()
@@ -247,7 +247,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val wv = WebView(this).apply {
-            setBackgroundColor(Color.parseColor("#0A0A0F"))
+            setBackgroundColor(Color.parseColor("#0A0C10"))
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
