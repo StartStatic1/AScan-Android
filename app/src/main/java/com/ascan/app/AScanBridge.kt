@@ -29,13 +29,21 @@ class AScanBridge(
 
     private val userAgents = listOf(
         "TiviMate/5.1.0 (Linux; Android 13)",
-        "IPTV Smarters Pro/3.1.5 (Linux; Android 12)",
-        "OTT Navigator/1.7.2.2 (Linux; Android 11)",
-        "GSE SMART IPTV/7.4 (Linux; Android 13)",
-        "XCIPTV/1.9.9 (Linux; Android 12)",
+        "TiviMate/4.7.0 (Android 11; NVIDIA SHIELD TV Pro)",
+        "IPTVSmartersPro/3.1.5 (Linux; Android 9) ExoPlayerLib/2.11.8",
+        "IPTV Smarters Pro",
+        "OTT Navigator/1.7.2.2",
+        "OTT Navigator/1.6.9.4 (Android)",
+        "GSE SMART IPTV/7.7",
+        "XCIPTV/1.0",
         "VLC/3.0.20 LibVLC/3.0.20",
+        "IBO Player",
+        "Duplex IPTV",
+        "SS IPTV",
         "okhttp/4.12.0",
-        "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
     )
 
     private val proxySources = listOf(

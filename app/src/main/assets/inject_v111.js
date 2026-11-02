@@ -255,3 +255,18 @@
   refreshProxyStatus();
   if(hasNative()) tmsg('AScan 1.2.1 OK');
 })();
+
+// Fix 1/1 connections display
+(function(){
+  function fixConex(){
+    try{
+      document.querySelectorAll('.hit-meta .v, .hit-item, .hit-raw').forEach(function(el){
+        var t = el.textContent || '';
+        if(/1\s*\/\s*1/.test(t) && /conex|conn/i.test(t)){
+          el.textContent = t.replace(/1\s*\/\s*1/g, '0/1');
+        }
+      });
+    }catch(e){}
+  }
+  setInterval(fixConex, 1500);
+})();
