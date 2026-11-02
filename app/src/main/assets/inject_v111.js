@@ -256,17 +256,34 @@
   if(hasNative()) tmsg('AScan 1.2.1 OK');
 })();
 
-// Fix 1/1 connections display
+
+
+// Fix conexões 1/1 -> valor real do user_info
 (function(){
-  function fixConex(){
+  var _orig = window.processarCredencial;
+  if(typeof _orig === 'function'){
+    window.processarCredencial = async function(cred){
+      var r = await _orig(cred);
+      try{
+        if(r && r.status === 'hit' && r.data && r.data.user_info){
+          var ui = r.data.user_info;
+          var ac = ui.active_cons != null ? String(ui.active_cons) : '0';
+          var mc = ui.max_connections != null ? String(ui.max_connections) : '1';
+          ui._conex = ac + '/' + mc;
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+  // Also fix display after render
+  setInterval(function(){
     try{
-      document.querySelectorAll('.hit-meta .v, .hit-item, .hit-raw').forEach(function(el){
+      document.querySelectorAll('.hit-raw, .hit-item, pre, .log-hit').forEach(function(el){
         var t = el.textContent || '';
-        if(/1\s*\/\s*1/.test(t) && /conex|conn/i.test(t)){
+        if(/Conex[oõ]es\s*[→\-]>?\s*1\s*\/\s*1/.test(t)){
           el.textContent = t.replace(/1\s*\/\s*1/g, '0/1');
         }
       });
     }catch(e){}
-  }
-  setInterval(fixConex, 1500);
+  }, 2000);
 })();
